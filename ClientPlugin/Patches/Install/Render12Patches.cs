@@ -32,10 +32,10 @@ internal static class Render12Patches
     private static void InstallSwapChain(Harmony harmony, Assembly render12)
     {
         Type swapChain = InstallTools.FindType(render12, "Keen.VRage.Render12.Core.Device.SwapChain");
-        // Verify the injected private fields exist before Harmony reports a confusing error.
-        InstallTools.FindField(swapChain, "_windows");
-        InstallTools.FindField(swapChain, "_currentDisplaySettings");
-        InstallTools.FindField(swapChain, "_requestedDisplaySettings");
+        SwapChainState.Windows = InstallTools.FindField(swapChain, "_windows");
+        SwapChainState.CurrentDisplaySettings = InstallTools.FindField(swapChain, "_currentDisplaySettings");
+        SwapChainState.RequestedDisplaySettings = InstallTools.FindField(swapChain, "_requestedDisplaySettings");
+        SwapChainState.Update = InstallTools.FindMethod(swapChain, "Update");
 
         MethodInfo createD3DSwapChain = swapChain
             .GetMethods(BindingFlags.Static | BindingFlags.NonPublic)
@@ -46,8 +46,57 @@ internal static class Render12Patches
                 && parameters[2].ParameterType == typeof(nint));
         harmony.Patch(createD3DSwapChain,
             prefix: InstallTools.Declared(typeof(SwapChainPatch), nameof(SwapChainPatch.Prefix)));
-        harmony.Patch(InstallTools.FindMethod(swapChain, "Update"),
-            prefix: InstallTools.Declared(typeof(SwapChainPatch), nameof(SwapChainPatch.UpdatePrefix)));
+
+        // SwapChain.Update contains an exception filter, which Harmony 2.4.2 cannot
+        // round-trip, so the resize consumption runs from its single (filter-free) caller,
+        // the render component's per-frame DrawInternal local function.
+        Type engineComponent = InstallTools.FindType(
+            render12, "Keen.VRage.Render12.EngineComponents.Render12EngineComponent");
+        harmony.Patch(InstallTools.FindMethodContaining(engineComponent, "g__DrawInternal|"),
+            transpiler: InstallTools.Declared(typeof(Render12Patches), nameof(DrawInternalTranspiler)));
+    }
+
+    private static class SwapChainState
+    {
+        public static FieldInfo Windows = null!;
+        public static FieldInfo CurrentDisplaySettings = null!;
+        public static FieldInfo RequestedDisplaySettings = null!;
+        public static MethodInfo Update = null!;
+    }
+
+    /// <summary>Inserts the pending-resize consumption immediately before the per-frame
+    /// <c>CoreSystems.SwapChain.Update()</c> call.</summary>
+    private static IEnumerable<CodeInstruction> DrawInternalTranspiler(IEnumerable<CodeInstruction> instructions)
+    {
+        List<CodeInstruction> result = [.. instructions];
+        MethodInfo adapter = InstallTools.FindMethod(typeof(Render12Patches), nameof(ConsumePendingSwapChainResize));
+        int count = 0;
+        for (int i = 0; i < result.Count; i++)
+        {
+            if (!InstallTools.CallsMethod(result[i], SwapChainState.Update))
+                continue;
+            result.InsertRange(i, [
+                new CodeInstruction(OpCodes.Dup),
+                new CodeInstruction(OpCodes.Call, adapter),
+            ]);
+            i += 2;
+            count++;
+        }
+        InstallTools.AssertCount(count, 1, "SwapChain.Update call in DrawInternal");
+        return result;
+    }
+
+    public static void ConsumePendingSwapChainResize(object swapChain)
+    {
+        var windows = (Keen.VRage.Core.Platform.IPlatformWindows?)SwapChainState.Windows.GetValue(swapChain);
+        if (windows == null)
+            return;
+        var current = (RenderDisplaySettings)SwapChainState.CurrentDisplaySettings.GetValue(swapChain)!;
+        var requested = (RenderDisplaySettings?)SwapChainState.RequestedDisplaySettings.GetValue(swapChain);
+        RenderDisplaySettings? updated = requested;
+        SwapChainPatch.UpdatePrefix(windows, current, ref updated);
+        if (!Nullable.Equals(updated, requested))
+            SwapChainState.RequestedDisplaySettings.SetValue(swapChain, updated);
     }
 
     private static void InstallScreenBuffers(Harmony harmony, Assembly render12)
@@ -128,7 +177,10 @@ internal static class Render12Patches
         HarmonyMethod transpiler = InstallTools.Declared(typeof(Render12Patches), nameof(BlockSizeTranspiler));
         harmony.Patch(AccessTools.Constructor(dataUploader, Type.EmptyTypes)
             ?? throw new MissingMethodException(dataUploader.FullName, ".ctor"), transpiler: transpiler);
-        harmony.Patch(InstallTools.FindMethod(dataUploader, "Pin"), transpiler: transpiler);
+        // The matching 256 MiB constant in the generic Pin<TData> stays unpatched: MonoMod
+        // cannot rewrite open generic definitions and Pin is instantiated with value types,
+        // which do not share code. Only explicit CPU-rendering runs allocate follow-up
+        // transient blocks large enough for this to matter.
     }
 
     /// <summary>Routes each 256 MiB transient upload block size constant through
@@ -473,8 +525,20 @@ internal static class Render12Patches
         Type screenshot = AccessTools.Inner(manager, "Screenshot")
             ?? throw new TypeLoadException("ScreenshotsManager.Screenshot was not found.");
         ScreenshotState.DownsampleResolution = InstallTools.FindField(screenshot, "DownsampleResolution");
-        harmony.Patch(InstallTools.FindMethod(manager, "TakeRequestedScreenshots"),
-            transpiler: InstallTools.Declared(typeof(Render12Patches), nameof(TakeRequestedScreenshotsTranspiler)));
+
+        // MonoMod cannot rewrite the open generic definition, so patch each reference-type
+        // instantiation the renderer actually calls; both compile to correctly typed bodies.
+        MethodInfo definition = InstallTools.FindMethod(manager, "TakeRequestedScreenshots");
+        foreach (string textureTypeName in new[]
+        {
+            "Keen.VRage.Render12.Resources.BindableTextures.RenderTargetTexture",
+            "Keen.VRage.Render12.Resources.BindableTextures.ResizableRWRenderTargetTexture",
+        })
+        {
+            Type textureType = InstallTools.FindType(render12, textureTypeName);
+            harmony.Patch(definition.MakeGenericMethod(textureType),
+                transpiler: InstallTools.Declared(typeof(Render12Patches), nameof(TakeRequestedScreenshotsTranspiler)));
+        }
     }
 
     private static class ScreenshotState

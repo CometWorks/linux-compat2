@@ -19,6 +19,10 @@ public static class PatchInstaller
 
         LinuxNativeLibraryResolver.Install();
 
+        // Several installers resolve types by name, which only searches loaded assemblies.
+        InstallTools.LoadAssembly("VRage.Library");
+        InstallTools.LoadAssembly("VRage.Core");
+
         // Patches owning their own installation (several defer until their target assembly loads).
         AppTimerPatch.Install();
         JsonSerializationPatch.Install();

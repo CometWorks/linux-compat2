@@ -1,0 +1,82 @@
+using System.Reflection;
+using LinuxCompat.Patches.Install;
+
+// Standalone check: installs every LinuxCompat Harmony patch against the original game
+// binaries without starting the game. All transpilers execute during installation, so this
+// validates every IL anchor. Run with the Game2 directory as the first argument (defaults
+// to the standard Steam location) and SE2_NATIVE_DIR pointing at the native libraries.
+
+string game2 = args.Length > 0
+    ? args[0]
+    : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+        ".steam", "debian-installation", "steamapps", "common", "SpaceEngineers2", "Game2");
+if (!Directory.Exists(game2))
+{
+    Console.Error.WriteLine($"Game2 directory not found: {game2}");
+    return 1;
+}
+
+// Pulsar's Steamworks wrapper takes precedence over the game copy, then the game directory,
+// mirroring the resolver order in Pulsar's Modern launcher.
+string pulsarLibraries = Path.Combine(
+    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Pulsar", "Libraries", "Modern");
+AppDomain.CurrentDomain.AssemblyResolve += (_, resolveArgs) =>
+{
+    string name = new AssemblyName(resolveArgs.Name).Name!;
+    foreach (string directory in new[] { pulsarLibraries, game2 })
+    {
+        string path = Path.Combine(directory, name + ".dll");
+        if (File.Exists(path))
+            return Assembly.LoadFrom(path);
+    }
+    return null;
+};
+
+try
+{
+    CheckSteamPrepatch(game2);
+    PatchInstaller.InstallAll();
+    Console.WriteLine("OK: all LinuxCompat patches installed against " + game2);
+    return 0;
+}
+catch (Exception exception)
+{
+    Console.Error.WriteLine("FAILED: " + exception);
+    return 2;
+}
+
+// Applies the Cecil rewrite the Pulsar preloader performs, loads the result, and force-JITs
+// the two rewritten methods so bad IL or unresolvable Steamworks members fail here instead
+// of mid-startup.
+static void CheckSteamPrepatch(string game2)
+{
+    string patched = Path.Combine(Path.GetTempPath(), $"LinuxCompat-SteamPrepatch-{Environment.ProcessId}");
+    Directory.CreateDirectory(patched);
+    string output = Path.Combine(patched, "VRage.Steam.dll");
+
+    var resolver = new Mono.Cecil.DefaultAssemblyResolver();
+    resolver.AddSearchDirectory(game2);
+    using (var assembly = Mono.Cecil.AssemblyDefinition.ReadAssembly(
+        Path.Combine(game2, "VRage.Steam.dll"),
+        new Mono.Cecil.ReaderParameters { AssemblyResolver = resolver }))
+    {
+        SteamPrepatch.Apply(assembly);
+        // Pulsar clears the R2R native code when writing preloader-patched assemblies.
+        assembly.MainModule.Attributes |= Mono.Cecil.ModuleAttributes.ILOnly;
+        assembly.Write(output);
+    }
+
+    Assembly steam = Assembly.LoadFrom(output);
+    foreach ((string typeName, string methodName) in new[]
+    {
+        ("Keen.VRage.Steam.UGC.SteamUGCServiceComponent", "RefreshSubscribedItemSet"),
+        ("Keen.VRage.Steam.EngineComponents.SteamGameServiceComponent", "InitializeAsUser"),
+    })
+    {
+        MethodInfo method = steam.GetType(typeName, throwOnError: true)!
+            .GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new MissingMethodException(typeName, methodName);
+        System.Runtime.CompilerServices.RuntimeHelpers.PrepareMethod(method.MethodHandle);
+        Console.WriteLine($"OK: prepared {typeName}.{methodName}");
+    }
+}
