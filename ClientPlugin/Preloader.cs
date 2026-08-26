@@ -10,6 +10,17 @@ using Mono.Cecil;
 public static class Preloader
 {
     /// <summary>
+    /// Runs before any preloader patching, which is the last moment at which the process
+    /// environment can still be corrected. Restarts the process when the runtime and Steam
+    /// need variables that must already be set at their initialization.
+    /// </summary>
+    // ReSharper disable once UnusedMember.Global
+    public static void Initialize()
+    {
+        LinuxCompat.Platform.LinuxProcessEnvironment.Apply();
+    }
+
+    /// <summary>
     /// VRage.Steam binds to Pulsar's Linux Steamworks wrapper at run time, and two of its
     /// methods reference members the wrapper does not expose; those cannot be patched with
     /// Harmony (their tokens no longer resolve), so the assembly is rewritten with Cecil

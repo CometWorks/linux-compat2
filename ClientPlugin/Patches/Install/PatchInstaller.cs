@@ -32,6 +32,8 @@ public static class PatchInstaller
         MetadataDependenciesPatch.Install();
         NativeFileSystemPathCasePatch.Install();
         ProjectLocatorPatch.Install();
+        CrashReportingPatch.Install();
+        UpsamplingPatch.Install();
         InputExtensionsPatch.Install();
         MainRenderTargetPatch.Install();
         PersistentDrawBatchPatch.Install();
