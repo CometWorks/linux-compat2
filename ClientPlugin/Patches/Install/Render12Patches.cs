@@ -218,7 +218,8 @@ internal static class Render12Patches
             AccessTools.Inner(AccessTools.TypeByName("Keen.VRage.Core.Render.AdapterInfo")!, "SupportDetailsData")!,
             "IsFeatureLevel");
         harmony.Patch(InstallTools.FindMethod(adapters, "CreateAdapterInfo"),
-            transpiler: InstallTools.Declared(typeof(Render12Patches), nameof(CreateAdapterInfoTranspiler)));
+            transpiler: InstallTools.Declared(typeof(Render12Patches), nameof(CreateAdapterInfoTranspiler)),
+            postfix: InstallTools.Declared(typeof(AdaptersPatch), nameof(AdaptersPatch.FixAdapterType)));
         harmony.Patch(InstallTools.FindMethod(adapters, "CreateAdaptersList"),
             transpiler: InstallTools.Declared(typeof(Render12Patches), nameof(CreateAdaptersListTranspiler)));
     }
