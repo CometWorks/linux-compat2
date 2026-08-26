@@ -39,6 +39,7 @@ internal static class LinuxProcessEnvironment
 
         string dumpDirectory = GetMiniDumpDirectory();
         TryCreateDirectory(dumpDirectory);
+        CollectSteamMiniDumps(dumpDirectory);
 
         bool readyToRunMissing = !IsDisabled(Environment.GetEnvironmentVariable(ReadyToRunVariable));
         bool breakpadMissing = Environment.GetEnvironmentVariable(BreakpadVariable) != dumpDirectory;
@@ -116,6 +117,60 @@ internal static class LinuxProcessEnvironment
         byte[] raw = File.ReadAllBytes("/proc/self/cmdline");
         return Encoding.UTF8.GetString(raw)
             .Split('\0', StringSplitOptions.RemoveEmptyEntries);
+    }
+
+    /// <summary>
+    /// Moves the minidumps Steam's crash handler left in <c>/tmp/dumps</c> into the game's own
+    /// minidump directory.
+    ///
+    /// Valve's <c>crashhandler.so</c>, which Steam installs during <c>SteamAPI_Init</c>, writes
+    /// its dumps to a hard-wired <c>/tmp/dumps</c>; it reads <c>BREAKPAD_DUMP_LOCATION</c> but
+    /// does not use it for that folder, and the dump is written by a forked child while the
+    /// game is dying, so the running process cannot move it in time. Collecting on the next
+    /// start keeps the dumps with the game's other diagnostics.
+    ///
+    /// Only dumps newer than the marker written by the previous start are taken, so unrelated
+    /// dumps that predate this game's session are left alone. Another Steam game crashing
+    /// during the same window would be swept up too, which is why the file is moved rather
+    /// than deleted.
+    /// </summary>
+    private static void CollectSteamMiniDumps(string dumpDirectory)
+    {
+        const string steamDumpDirectory = "/tmp/dumps";
+        string marker = Path.Combine(dumpDirectory, ".last-session");
+        try
+        {
+            DateTime since = File.Exists(marker) ? File.GetLastWriteTimeUtc(marker) : DateTime.UtcNow;
+            File.WriteAllText(marker, string.Empty);
+
+            if (!Directory.Exists(steamDumpDirectory))
+                return;
+
+            int moved = 0;
+            foreach (string dump in Directory.EnumerateFiles(steamDumpDirectory, "*.dmp"))
+            {
+                if (File.GetLastWriteTimeUtc(dump) < since)
+                    continue;
+                try
+                {
+                    File.Move(dump, Path.Combine(dumpDirectory, Path.GetFileName(dump)), overwrite: true);
+                    moved++;
+                }
+                catch (IOException)
+                {
+                }
+                catch (UnauthorizedAccessException)
+                {
+                }
+            }
+
+            if (moved != 0)
+                Console.WriteLine($"[LinuxCompat] Moved {moved} Steam minidump(s) from {steamDumpDirectory} to {dumpDirectory}.");
+        }
+        catch (Exception exception)
+        {
+            Console.Error.WriteLine($"[LinuxCompat] WARNING: cannot collect Steam minidumps: {exception.Message}");
+        }
     }
 
     /// <summary>

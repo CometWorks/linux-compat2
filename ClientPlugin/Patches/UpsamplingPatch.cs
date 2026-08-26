@@ -31,9 +31,18 @@ internal static class UpsamplingPatch
             postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(UpsamplingPatch), nameof(Postfix))!));
     }
 
+    private static int _reported;
+
     private static void Postfix(ref DRSSettings __result)
     {
-        if (OperatingSystem.IsLinux() && __result.AAMode == AAMode.FSR)
-            __result.AAMode = AAMode.FXAA;
+        if (!OperatingSystem.IsLinux() || __result.AAMode != AAMode.FSR)
+            return;
+
+        __result.AAMode = AAMode.FXAA;
+
+        // The getter runs per frame, so report the substitution only the first time.
+        if (Interlocked.Exchange(ref _reported, 1) == 0)
+            Console.WriteLine("[LinuxCompat] FSR upscaling needs the Windows-only "
+                + "amd_fidelityfx_dx12.dll; falling back to FXAA with bilinear upscaling.");
     }
 }
