@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System.Text;
 
 namespace LinuxCompat.Platform;
@@ -132,36 +132,28 @@ internal static class LinuxProcessEnvironment
     /// Only dumps newer than the marker written by the previous start are taken, so unrelated
     /// dumps that predate this game's session are left alone. Another Steam game crashing
     /// during the same window would be swept up too, which is why the file is moved rather
-    /// than deleted.
+    /// than deleted. Empty files are skipped: they are either still being written or one of
+    /// the placeholders Steam leaves behind.
+    ///
+    /// The whole sweep is best effort. It runs from the preloader, before the game starts, so
+    /// no failure here may propagate; and every dump is handled on its own, because the crash
+    /// handler and every other Steam game keep changing this directory while it runs.
     /// </summary>
     private static void CollectSteamMiniDumps(string dumpDirectory)
     {
         const string steamDumpDirectory = "/tmp/dumps";
-        string marker = Path.Combine(dumpDirectory, ".last-session");
         try
         {
-            DateTime since = File.Exists(marker) ? File.GetLastWriteTimeUtc(marker) : DateTime.UtcNow;
-            File.WriteAllText(marker, string.Empty);
+            DateTime since = StampSession(dumpDirectory);
 
             if (!Directory.Exists(steamDumpDirectory))
                 return;
 
             int moved = 0;
-            foreach (string dump in Directory.EnumerateFiles(steamDumpDirectory, "*.dmp"))
+            foreach (string dump in EnumerateDumps(steamDumpDirectory))
             {
-                if (File.GetLastWriteTimeUtc(dump) < since)
-                    continue;
-                try
-                {
-                    File.Move(dump, Path.Combine(dumpDirectory, Path.GetFileName(dump)), overwrite: true);
+                if (TryTakeMiniDump(dump, dumpDirectory, since))
                     moved++;
-                }
-                catch (IOException)
-                {
-                }
-                catch (UnauthorizedAccessException)
-                {
-                }
             }
 
             if (moved != 0)
@@ -169,7 +161,112 @@ internal static class LinuxProcessEnvironment
         }
         catch (Exception exception)
         {
-            Console.Error.WriteLine($"[LinuxCompat] WARNING: cannot collect Steam minidumps: {exception.Message}");
+            // This runs from the preloader, so nothing here may reach the game's startup path.
+            Warn($"cannot collect Steam minidumps: {exception.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Returns the time the previous start was stamped, and stamps this one. Both halves are
+    /// best effort: a marker that cannot be read means "take nothing", which is the safe
+    /// direction, and a marker that cannot be written only costs the next start its dumps.
+    /// </summary>
+    private static DateTime StampSession(string dumpDirectory)
+    {
+        string marker = Path.Combine(dumpDirectory, ".last-session");
+        DateTime since = DateTime.UtcNow;
+
+        try
+        {
+            FileInfo info = new(marker);
+            if (info.Exists)
+                since = info.LastWriteTimeUtc;
+        }
+        catch (Exception exception)
+        {
+            Warn($"cannot read {marker}: {exception.Message}");
+        }
+
+        try
+        {
+            File.WriteAllText(marker, string.Empty);
+        }
+        catch (Exception exception)
+        {
+            Warn($"cannot update {marker}: {exception.Message}");
+        }
+
+        return since;
+    }
+
+    /// <summary>
+    /// The dump files currently in <paramref name="directory"/>. Steam's <c>/tmp/dumps</c> is
+    /// shared with every other game and written to by a crash handler that may still be
+    /// running, so entries can vanish or be unreadable mid-walk; a failed listing yields
+    /// whatever it already produced instead of losing the whole sweep.
+    /// </summary>
+    private static IEnumerable<string> EnumerateDumps(string directory)
+    {
+        EnumerationOptions options = new() { IgnoreInaccessible = true };
+        IEnumerator<string> dumps;
+        try
+        {
+            dumps = Directory.EnumerateFiles(directory, "*.dmp", options).GetEnumerator();
+        }
+        catch (Exception exception)
+        {
+            Warn($"cannot list {directory}: {exception.Message}");
+            yield break;
+        }
+
+        using (dumps)
+        {
+            while (true)
+            {
+                try
+                {
+                    if (!dumps.MoveNext())
+                        yield break;
+                }
+                catch (Exception exception)
+                {
+                    Warn($"stopped listing {directory}: {exception.Message}");
+                    yield break;
+                }
+
+                yield return dumps.Current;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Moves a single dump if it belongs to the session that just ended. Failure is the
+    /// normal case rather than an error here: the crash handler's forked child creates,
+    /// truncates and removes files while this runs, and dumps left by another user in the
+    /// shared directory are not ours to touch. Each dump therefore fails on its own, without
+    /// aborting the ones after it and without logging noise for a directory full of files
+    /// that were never ours.
+    /// </summary>
+    private static bool TryTakeMiniDump(string dump, string dumpDirectory, DateTime since)
+    {
+        try
+        {
+            FileInfo info = new(dump);
+
+            // Gone since the listing, or an empty file — either still being written by the
+            // crash handler or a placeholder such as the assert_*_4.dmp Steam leaves behind.
+            if (!info.Exists || info.Length == 0)
+                return false;
+
+            if (info.LastWriteTimeUtc < since)
+                return false;
+
+            File.Move(dump, Path.Combine(dumpDirectory, info.Name), overwrite: true);
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
         }
     }
 
@@ -204,7 +301,22 @@ internal static class LinuxProcessEnvironment
         }
         catch (Exception exception)
         {
-            Console.Error.WriteLine($"[LinuxCompat] WARNING: cannot create {directory}: {exception.Message}");
+            Warn($"cannot create {directory}: {exception.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Reports a non-fatal problem. Swallows even a failing console so that diagnostics can
+    /// never be the reason the game does not start.
+    /// </summary>
+    private static void Warn(string message)
+    {
+        try
+        {
+            Console.Error.WriteLine($"[LinuxCompat] WARNING: {message}");
+        }
+        catch (Exception)
+        {
         }
     }
 
