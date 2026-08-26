@@ -9,24 +9,17 @@ namespace LinuxCompat.Patches;
 
 public static class GameAppPatch
 {
-    public static bool AddPlatform(EngineBuilder builder, PlatformObjectBuilder platformObjectBuilder)
+    public static void AddPlatform(EngineBuilder builder, PlatformObjectBuilder platformObjectBuilder)
     {
-        if (!OperatingSystem.IsLinux())
-            return false;
-
         builder.Add<LinuxSystemEngineComponent>();
         builder.Add<LinuxRenderEngineComponent>();
         builder.Add<LinuxMemoryEngineComponent>();
         builder.Add<LinuxWindowsEngineComponent>(platformObjectBuilder);
         builder.Add<SdlInputComponent>();
-        return true;
     }
 
     public static void ConfigureRender(RenderConfigurationObjectBuilder configuration, RenderObjectBuilder render)
     {
-        if (!OperatingSystem.IsLinux())
-            return;
-
         configuration.UseDirectStorage = false;
         if (LinuxNativeLibraryResolver.IsEnabled("SE2_CPU_RENDERING"))
             configuration.ForceAllAdaptersSupported = true;

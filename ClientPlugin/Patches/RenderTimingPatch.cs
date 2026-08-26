@@ -31,7 +31,6 @@ internal static class RenderTimingPatch
 
     private static void Prefix(ref TimeSpan __0)
     {
-        if (OperatingSystem.IsLinux())
-            __0 = Stopwatch.GetElapsedTime(0, __0.Ticks);
+        __0 = Stopwatch.GetElapsedTime(0, __0.Ticks);
     }
 }

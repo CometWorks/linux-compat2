@@ -34,9 +34,6 @@ internal static class LinuxProcessEnvironment
 
     public static void Apply()
     {
-        if (!OperatingSystem.IsLinux())
-            return;
-
         string dumpDirectory = GetMiniDumpDirectory();
         TryCreateDirectory(dumpDirectory);
         CollectSteamMiniDumps(dumpDirectory);

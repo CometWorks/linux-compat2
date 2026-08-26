@@ -35,7 +35,7 @@ internal static class UpsamplingPatch
 
     private static void Postfix(ref DRSSettings __result)
     {
-        if (!OperatingSystem.IsLinux() || __result.AAMode != AAMode.FSR)
+        if (__result.AAMode != AAMode.FSR)
             return;
 
         __result.AAMode = AAMode.FXAA;

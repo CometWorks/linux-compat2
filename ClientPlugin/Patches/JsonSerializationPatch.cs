@@ -13,8 +13,7 @@ public static class JsonSerializationPatch
 
     public static void AdjustArchiveStreamPosition(Stream source)
     {
-        if (OperatingSystem.IsLinux()
-            && source is MemoryStream { Position: 5 } memory
+        if (source is MemoryStream { Position: 5 } memory
             && memory.TryGetBuffer(out ArraySegment<byte> buffer)
             && buffer.AsSpan().StartsWith("{\n  \""u8))
             memory.Position = 4;

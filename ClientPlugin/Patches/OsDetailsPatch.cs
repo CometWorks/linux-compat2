@@ -17,9 +17,6 @@ internal static class OsDetailsPatch
 {
     public static bool PrintOsDetails(Log log)
     {
-        if (!OperatingSystem.IsLinux())
-            return true;
-
         // OSDescription is the os-release pretty name on Linux; the OS Version line the
         // renderer logs just above this one carries only the kernel version numbers.
         log.WriteLine("OS Product: " + RuntimeInformation.OSDescription);

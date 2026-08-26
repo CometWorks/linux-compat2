@@ -14,7 +14,7 @@ public static class PatchInstaller
 
     public static void InstallAll()
     {
-        if (!OperatingSystem.IsLinux() || Interlocked.Exchange(ref _installed, 1) != 0)
+        if (Interlocked.Exchange(ref _installed, 1) != 0)
             return;
 
         ManagedAssemblyResolver.Install();

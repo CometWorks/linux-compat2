@@ -448,9 +448,7 @@ internal static class Render12Patches
     /// Windows handle contract, so poll the fence completion value instead.</summary>
     public static bool WaitForFence(ID3D12Fence fence, ulong value, string context)
     {
-        if (!FrameDispatcherPatch.TryWaitForFence(fence, value, 20000, out bool completed))
-            return false;
-        if (!completed)
+        if (!FrameDispatcherPatch.PollFence(fence, value, 20000))
             throw new TimeoutException($"{context} failed to synchronize CPU with the GPU command queue.");
         return true;
     }

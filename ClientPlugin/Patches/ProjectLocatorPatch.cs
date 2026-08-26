@@ -24,7 +24,7 @@ internal static class ProjectLocatorPatch
 
     private static void Prefix(ref string __0)
     {
-        if (!OperatingSystem.IsLinux() || !__0.Contains('\\'))
+        if (!__0.Contains('\\'))
             return;
 
         string normalized = __0.Replace('\\', Path.DirectorySeparatorChar);

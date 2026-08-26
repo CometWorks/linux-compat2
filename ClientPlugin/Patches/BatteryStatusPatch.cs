@@ -16,9 +16,6 @@ public static class BatteryStatusPatch
 
     public static bool Prefix(ref bool __result)
     {
-        if (!OperatingSystem.IsLinux())
-            return true;
-
         __result = false;
         return false;
     }

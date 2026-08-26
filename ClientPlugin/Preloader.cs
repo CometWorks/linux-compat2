@@ -27,8 +27,7 @@ public static class Preloader
     /// before it loads. Everything else is patched with Harmony from Finish.
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public static IEnumerable<string> TargetDLLs =>
-        System.OperatingSystem.IsLinux() ? ["VRage.Steam.dll"] : [];
+    public static IEnumerable<string> TargetDLLs => ["VRage.Steam.dll"];
 
     // ReSharper disable once UnusedMember.Global
     public static void Patch(AssemblyDefinition asmDef)

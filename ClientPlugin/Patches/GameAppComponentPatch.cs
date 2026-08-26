@@ -10,7 +10,7 @@ public static class GameAppComponentPatch
     /// </summary>
     public static void Prefix(ref TimeSpan waitTime)
     {
-        if (OperatingSystem.IsLinux() && LinuxNativeLibraryResolver.IsEnabled("SE2_CPU_RENDERING"))
+        if (LinuxNativeLibraryResolver.IsEnabled("SE2_CPU_RENDERING"))
             waitTime = TimeSpan.FromMinutes(2);
     }
 }

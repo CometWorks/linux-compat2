@@ -72,15 +72,12 @@ internal static class MetadataDependenciesPatch
     private static FieldInfo _attributeIndexerSets = null!;
     private static MethodInfo _attributeIndexerSetsAdd = null!;
 
-    private static void IncludePluginAssemblyPostfix(ref IEnumerable<Assembly> __result)
-    {
-        if (OperatingSystem.IsLinux())
-            __result = __result.Append(typeof(MetadataDependenciesPatch).Assembly).Distinct();
-    }
+    private static void IncludePluginAssemblyPostfix(ref IEnumerable<Assembly> __result) =>
+        __result = __result.Append(typeof(MetadataDependenciesPatch).Assembly).Distinct();
 
     private static void ObservePostfix(object __instance, Assembly assembly)
     {
-        if (!OperatingSystem.IsLinux() || assembly != typeof(MetadataDependenciesPatch).Assembly)
+        if (assembly != typeof(MetadataDependenciesPatch).Assembly)
             return;
 
         object sets = _attributeIndexerSets.GetValue(__instance)!;
@@ -94,18 +91,14 @@ internal static class MetadataDependenciesPatch
         Console.WriteLine("[LinuxCompat] Registered Linux engine components with the metadata indexer.");
     }
 
-    private static void AddPluginAssemblyPrefix(ref IEnumerable<Assembly> __0)
-    {
-        if (OperatingSystem.IsLinux())
-            __0 = __0.Append(typeof(MetadataDependenciesPatch).Assembly).Distinct();
-    }
+    private static void AddPluginAssemblyPrefix(ref IEnumerable<Assembly> __0) =>
+        __0 = __0.Append(typeof(MetadataDependenciesPatch).Assembly).Distinct();
 
     /// <summary>Attribute instances are materialized through this constructor on every
     /// GetCustomAttribute call, so filtering here keeps the expansion Windows-free.</summary>
     private static void FilterDependenciesPrefix(ref string[] assemblyNames)
     {
-        if (OperatingSystem.IsLinux()
-            && assemblyNames.Any(name => name.StartsWith("VRage.Platform.Windows,", StringComparison.Ordinal)))
+        if (assemblyNames.Any(name => name.StartsWith("VRage.Platform.Windows,", StringComparison.Ordinal)))
         {
             assemblyNames = assemblyNames
                 .Where(name => !name.StartsWith("VRage.Platform.Windows,", StringComparison.Ordinal))

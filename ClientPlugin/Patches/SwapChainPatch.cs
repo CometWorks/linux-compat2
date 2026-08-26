@@ -8,16 +8,14 @@ public static class SwapChainPatch
 {
     public static void Prefix(in RenderDisplaySettings settings, nint windowHandle)
     {
-        if (OperatingSystem.IsLinux())
-            SdlPlatformWindow.PrepareForSwapChain(windowHandle, settings.Resolution);
+        SdlPlatformWindow.PrepareForSwapChain(windowHandle, settings.Resolution);
     }
 
     public static void UpdatePrefix(IPlatformWindows ____windows,
         RenderDisplaySettings ____currentDisplaySettings,
         ref RenderDisplaySettings? ____requestedDisplaySettings)
     {
-        if (!OperatingSystem.IsLinux()
-            || ____windows.Window is not SdlPlatformWindow window
+        if (____windows.Window is not SdlPlatformWindow window
             || !window.TryConsumeDrawableResize(out var resolution))
             return;
 

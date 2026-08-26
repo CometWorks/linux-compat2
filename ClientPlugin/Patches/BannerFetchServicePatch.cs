@@ -15,8 +15,8 @@ public static class BannerFetchServicePatch
             TryPatch(assembly);
     }
 
-    public static string ResolveImageUrl(string url, bool isLinux) =>
-        isLinux && url.StartsWith("/", StringComparison.Ordinal) && !url.StartsWith("//", StringComparison.Ordinal)
+    public static string ResolveImageUrl(string url) =>
+        url.StartsWith("/", StringComparison.Ordinal) && !url.StartsWith("//", StringComparison.Ordinal)
             ? ContentOrigin + url
             : url;
 
@@ -43,5 +43,5 @@ public static class BannerFetchServicePatch
             prefix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(BannerFetchServicePatch), nameof(Prefix))!));
     }
 
-    private static void Prefix(ref string __0) => __0 = ResolveImageUrl(__0, OperatingSystem.IsLinux());
+    private static void Prefix(ref string __0) => __0 = ResolveImageUrl(__0);
 }

@@ -17,7 +17,7 @@ internal static class InputExtensionsPatch
 
     private static bool Prefix(ref InputId input, ref InputDescription __result)
     {
-        if (!OperatingSystem.IsLinux() || !input.IsGeneric
+        if (!input.IsGeneric
             || !Keen.VRage.Library.Utils.ManualSingleton<InputDeviceManager>.HasValue
             || Keen.VRage.Library.Utils.Singleton<InputDeviceManager>.Instance.GetDefaultDeviceClass(input.GenericClass) != null)
             return true;

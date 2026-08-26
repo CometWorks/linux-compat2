@@ -1,7 +1,5 @@
 using Keen.VRage.Core;
-using Keen.VRage.Platform.Windows;
 using LinuxCompat.Platform;
-using System.Runtime.CompilerServices;
 
 namespace LinuxCompat.Patches;
 
@@ -12,8 +10,7 @@ public static class ProgramPatch
     /// Patch installation happens in the Pulsar preloader hook; by the time this runs the
     /// resolvers and Harmony patches are already in place.
     /// </summary>
-    public static IPlatformFactory SelectPlatformFactory() =>
-        OperatingSystem.IsLinux() ? new LinuxPlatformFactory() : CreateWindowsFactory();
+    public static IPlatformFactory SelectPlatformFactory() => new LinuxPlatformFactory();
 
     /// <summary>
     /// Replaces the <c>Program.CheckInstallPathLength</c> call in Main. The original method
@@ -22,7 +19,4 @@ public static class ProgramPatch
     /// Linux has no such path limit, so the call is redirected rather than the method patched.
     /// </summary>
     public static bool CheckInstallPath(string[] args) => true;
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private static IPlatformFactory CreateWindowsFactory() => new VRageWindows();
 }

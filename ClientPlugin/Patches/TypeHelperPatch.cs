@@ -23,7 +23,7 @@ internal static class TypeHelperPatch
 
     private static bool Prefix(Type type, ref uint __result)
     {
-        if (!OperatingSystem.IsLinux() || !type.IsValueType)
+        if (!type.IsValueType)
             return true;
 
         __result = Sizes.GetOrAdd(type, static valueType =>

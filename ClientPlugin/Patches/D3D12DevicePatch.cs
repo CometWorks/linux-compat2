@@ -6,9 +6,6 @@ public static class D3D12DevicePatch
 {
     public static unsafe ResourceAllocationInfo GetResourceAllocationInfo(ID3D12Device device, params ResourceDescription[] descriptions)
     {
-        if (!OperatingSystem.IsLinux())
-            return device.GetResourceAllocationInfo(descriptions);
-
         ResourceAllocationInfo result = default;
         fixed (ResourceDescription* description = descriptions)
         {

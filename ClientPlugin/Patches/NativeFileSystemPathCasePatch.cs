@@ -25,22 +25,18 @@ internal static class NativeFileSystemPathCasePatch
 
     private static bool CasePrefix(string __0, ref string __result)
     {
-        if (!OperatingSystem.IsLinux())
-            return true;
         __result = ResolvePathCase(__0);
         return false;
     }
 
     private static void NormalizePrefix(ref string __0)
     {
-        if (OperatingSystem.IsLinux())
-            __0 = __0.Replace('\\', Path.DirectorySeparatorChar);
+        __0 = __0.Replace('\\', Path.DirectorySeparatorChar);
     }
 
     private static void ResolveFilePrefix(ref string __0)
     {
-        if (OperatingSystem.IsLinux())
-            __0 = ResolvePathCase(__0);
+        __0 = ResolvePathCase(__0);
     }
 
     private static string ResolvePathCase(string path)

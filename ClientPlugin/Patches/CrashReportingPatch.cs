@@ -41,9 +41,6 @@ internal static class CrashReportingPatch
 
     private static void InitializePrefix(ref CrashReportingSetup setup)
     {
-        if (!OperatingSystem.IsLinux())
-            return;
-
         setup.Options = CrashReportingOptions.Disabled;
         Console.WriteLine("[LinuxCompat] Crash reporting to the game's developer is disabled on Linux.");
     }
@@ -54,9 +51,6 @@ internal static class CrashReportingPatch
     /// </summary>
     private static bool SkipSendPrefix(ref Keen.VRage.Library.Threading.Task __result)
     {
-        if (!OperatingSystem.IsLinux())
-            return true;
-
         __result = System.Threading.Tasks.Task.CompletedTask;
         return false;
     }

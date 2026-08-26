@@ -102,8 +102,8 @@ internal static class GameExePatches
     }
 
     /// <summary>
-    /// Routes the single Windows platform registration call in GameApp.CreateEngine through
-    /// the Linux adapter, preserving the original registration as the non-Linux fallback.
+    /// Replaces the single Windows platform registration call in GameApp.CreateEngine with
+    /// the Linux one.
     /// </summary>
     private static IEnumerable<CodeInstruction> CreateEngineTranspiler(IEnumerable<CodeInstruction> instructions)
     {
@@ -114,14 +114,17 @@ internal static class GameExePatches
         return InstallTools.ReplaceCalls(instructions, addPlatform, adapter, 1, "AddPlatform call in CreateEngine");
     }
 
+    /// <summary>
+    /// The signature mirrors the Windows AddPlatform call this replaces, so the unused
+    /// builders keep the transpiled call site's argument list intact.
+    /// </summary>
     public static EngineBuilder AddPlatformAdapter(
         EngineBuilder builder,
         MemoryObjectBuilder? memoryObjectBuilder,
         PlatformObjectBuilder platformObjectBuilder,
         InputObjectBuilder? inputObjectBuilder)
     {
-        if (!GameAppPatch.AddPlatform(builder, platformObjectBuilder))
-            WindowsEngineBuilderExtensions.AddPlatform(builder, memoryObjectBuilder, platformObjectBuilder, inputObjectBuilder);
+        GameAppPatch.AddPlatform(builder, platformObjectBuilder);
         return builder;
     }
 

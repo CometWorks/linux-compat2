@@ -24,9 +24,6 @@ public static class UIEngineComponentPatch
 
     public static void RecordDisplaySettings(in RenderDisplaySettings settings)
     {
-        if (!OperatingSystem.IsLinux())
-            return;
-
         lock (PendingLock)
             _pending = settings;
     }

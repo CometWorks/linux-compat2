@@ -12,9 +12,6 @@ public static class MainUISystemPatch
 
     public static Vector2 ResolveViewportResolution(Vector2 viewportResolution)
     {
-        if (!OperatingSystem.IsLinux())
-            return viewportResolution;
-
         lock (ResolutionLock)
         {
             if (_renderResolution.X <= 0f || _renderResolution.Y <= 0f)
@@ -25,27 +22,18 @@ public static class MainUISystemPatch
 
     public static void LayoutUpdated(Vector2I resolution)
     {
-        if (!OperatingSystem.IsLinux())
-            return;
-
         lock (ResolutionLock)
             _layoutResolution = new Vector2(resolution.X, resolution.Y);
     }
 
     public static void RecordSubmittedBatch(RenderDrawCommandBuffer drawBatch)
     {
-        if (!OperatingSystem.IsLinux())
-            return;
-
         lock (ResolutionLock)
             SubmittedBatchResolutions[drawBatch] = _layoutResolution;
     }
 
     public static void BatchSubmitted(RenderDrawCommandBuffer drawBatch, int sortLayer)
     {
-        if (!OperatingSystem.IsLinux())
-            return;
-
         lock (ResolutionLock)
         {
             if (SubmittedBatchResolutions.Remove(drawBatch, out Vector2 resolution)

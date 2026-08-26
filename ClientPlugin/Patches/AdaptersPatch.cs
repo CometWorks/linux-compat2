@@ -23,7 +23,7 @@ public static class AdaptersPatch
     /// </summary>
     public static void FixAdapterType(ref AdapterInfo? __result)
     {
-        if (!OperatingSystem.IsLinux() || __result is not { } adapter)
+        if (__result is not { } adapter)
             return;
 
         if (VulkanAdapterTypes.IsIntegrated(adapter.DeviceName) is not { } isIntegrated
@@ -41,7 +41,7 @@ public static class AdaptersPatch
     /// <c>Adapters.CreateSupportedDevice</c> builds for every enumerated adapter.
     /// </summary>
     public static bool SkipProbeDevice()
-        => OperatingSystem.IsLinux() && LinuxNativeLibraryResolver.IsEnabled("SE2_CPU_RENDERING");
+        => LinuxNativeLibraryResolver.IsEnabled("SE2_CPU_RENDERING");
 
     /// <summary>
     /// Reports feature level 12.0 support when the probe device was deliberately skipped.
@@ -52,7 +52,7 @@ public static class AdaptersPatch
     public static bool FeatureAnalysisPrefix(ref bool deviceSupported, ref bool doublePrecision,
         ref bool rayTracing, ref bool isIntegrated)
     {
-        if (!OperatingSystem.IsLinux() || !LinuxNativeLibraryResolver.IsEnabled("SE2_CPU_RENDERING"))
+        if (!LinuxNativeLibraryResolver.IsEnabled("SE2_CPU_RENDERING"))
             return true;
 
         deviceSupported = false;
