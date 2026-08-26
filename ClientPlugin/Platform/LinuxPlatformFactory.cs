@@ -10,9 +10,7 @@ internal sealed class LinuxPlatformFactory : IPlatformFactory
 {
     public VRagePlatformCore CreateCore(string? customUserDataPath, string[] args)
     {
-        string dataHome = Environment.GetEnvironmentVariable("XDG_DATA_HOME")
-            ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "share");
-        string appDataPath = customUserDataPath ?? Path.Combine(dataHome, Keen.VRage.Library.Utils.Singleton<VRageCore>.Instance.ApplicationName);
+        string appDataPath = LinuxDataFolder.Resolve(customUserDataPath);
         Directory.CreateDirectory(appDataPath);
         Directory.CreateDirectory(Path.Combine(appDataPath, "Temp"));
 

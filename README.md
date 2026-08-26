@@ -91,7 +91,7 @@ images, which the Linux runtime refuses to load unless the precompiled code is i
   instantiations (see comments in `Patches/Install/Render12Patches.cs`).
 - Plugin build cache: `~/.config/Pulsar/Modern/DevFolder/linux-compat-*/`; delete it to
   force a rebuild and asset redeploy. Compile errors appear in
-  `~/.config/Pulsar/Modern/info.log`; game logs in `~/.local/share/SpaceEngineers2/Temp/Logs/`.
+  `~/.config/Pulsar/Modern/info.log`; game logs in `~/.config/SpaceEngineers2/Temp/Logs/`.
 
 ## Repository layout
 
@@ -99,7 +99,7 @@ images, which the Linux runtime refuses to load unless the precompiled code is i
 - `ClientPlugin/Patches/Install/` — installers that bind them to the shipped binaries,
   including the transpilers with their IL anchors, and the `VRage.Steam` Cecil prepatch
 - `ClientPlugin/Platform/` — the Linux platform implementation (SDL windowing/input,
-  splash, HTTP, engine components, native library resolver)
+  splash, HTTP, engine components, native library resolver, data folder)
 - `ClientPlugin/Preloader.cs` — Pulsar preloader hooks; `Finish()` installs everything
   in-process before the game's `Main` runs
 - `LinuxCompat.xml` — Pulsar registration including the native dependency assets

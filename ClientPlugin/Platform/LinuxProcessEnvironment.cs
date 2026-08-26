@@ -272,26 +272,12 @@ internal static class LinuxProcessEnvironment
 
     /// <summary>
     /// The game's minidump directory, matching <c>CrashHandler.GetMiniDumpsPath()</c>. It has
-    /// to be computed here because the engine's own data path is not established yet.
+    /// to be computed here because the engine's own data path is not established yet, which is
+    /// why the data folder itself comes from <see cref="LinuxDataFolder"/> rather than from
+    /// <c>VRagePlatformCore.AppDataPath</c>.
     /// </summary>
     public static string GetMiniDumpDirectory() =>
-        Path.Combine(GetAppDataPath(), "Temp", "MiniDumps");
-
-    private static string GetAppDataPath()
-    {
-        const string appDataArgument = "-appData:";
-        foreach (string argument in Environment.GetCommandLineArgs())
-        {
-            if (argument.StartsWith(appDataArgument, StringComparison.Ordinal))
-                return argument[appDataArgument.Length..];
-        }
-
-        // Mirrors LinuxPlatformFactory.CreateCore.
-        string dataHome = Environment.GetEnvironmentVariable("XDG_DATA_HOME") is { Length: > 0 } xdg
-            ? xdg
-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "share");
-        return Path.Combine(dataHome, "SpaceEngineers2");
-    }
+        Path.Combine(LinuxDataFolder.Resolve(), "Temp", "MiniDumps");
 
     private static void TryCreateDirectory(string directory)
     {

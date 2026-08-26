@@ -123,9 +123,9 @@ internal static class LinuxNativeLibraryResolver
 
     private static string? CreateWrapperCacheDirectory()
     {
-        string directory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "SpaceEngineers2", "NativeWrapperCache");
+        // Beside the game's data folder, not inside a -appData: profile: the cache belongs to
+        // the installed wrappers, not to the user data the argument switches between.
+        string directory = Path.Combine(LinuxDataFolder.Root, "NativeWrapperCache");
         if (TryCreateDirectory(directory))
             return directory;
 
