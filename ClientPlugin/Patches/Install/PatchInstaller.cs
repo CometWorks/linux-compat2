@@ -36,6 +36,7 @@ public static class PatchInstaller
         UpsamplingPatch.Install();
         InputExtensionsPatch.Install();
         MainRenderTargetPatch.Install();
+        SaveSessionComponentPatch.Install();
         PersistentDrawBatchPatch.Install();
         UIEngineComponentPatch.Install();
         OctreeInfoDisposePatch.Install();
