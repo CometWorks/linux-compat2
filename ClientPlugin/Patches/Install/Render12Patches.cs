@@ -27,6 +27,7 @@ internal static class Render12Patches
         InstallFramePacer(harmony, render12);
         InstallScreenshotsManager(harmony, render12);
         InstallUiResolution(harmony, render12);
+        InstallOsDetails(harmony, render12);
     }
 
     private static void InstallSwapChain(Harmony harmony, Assembly render12)
@@ -680,4 +681,12 @@ internal static class Render12Patches
 
     private static void DisplaySettingsChangedPostfix(RenderDisplaySettings __0) =>
         UIEngineComponentPatch.RecordDisplaySettings(in __0);
+
+    private static void InstallOsDetails(Harmony harmony, Assembly render12)
+    {
+        Type engineComponent = InstallTools.FindType(
+            render12, "Keen.VRage.Render12.EngineComponents.Render12EngineComponent");
+        harmony.Patch(InstallTools.FindMethodContaining(engineComponent, "g__PrintOSDetails|"),
+            prefix: InstallTools.Declared(typeof(OsDetailsPatch), nameof(OsDetailsPatch.PrintOsDetails)));
+    }
 }
