@@ -2,65 +2,78 @@
 <PluginData xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="GitHubPlugin">
 
     <!-- The ID of your plugin, never change this -->
-    <Id>9744C158-1AE9-498A-871A-88D334574A5A</Id>
+    <Id>linux-compat</Id>
 
     <!-- GitHub repository ID -->
-    <RepoId>todo-github-user/project-name</RepoId>
+    <RepoId>CometWorks/linux-compat2</RepoId>
 
     <!-- The name of your plugin that will appear in the plugin list -->
-    <FriendlyName>TODO LinuxCompat</FriendlyName>
+    <FriendlyName>LinuxCompat</FriendlyName>
 
     <!-- The author name that you want to appear in the plugin list -->
-    <Author>TODO Author Name</Author>
+    <Author>Viktor</Author>
 
-    <!-- Optional tooltip for the plugin in the plugin list -->
-    <Tooltip>TODO Short description</Tooltip>
+    <Tooltip>Linux support for Space Engineers 2</Tooltip>
+    <Description>Patches Space Engineers 2 to run natively on Linux. The plugin loads automatically when needed.</Description>
 
-    <!-- Optional plugin description. If omitted, this will be the same as the Tooltip. 1000 characters max. -->
-    <Description>TODO Long description, multiple lines.
-
-        This text is shown on the plugin details panel in a scrollable text box.
-
-        You can use links here, players can click on them. For example, add a Discord invite.
-    </Description>
-
-    <!-- Only source code in the Directory entries listed in SourceDirectories is compiled. Exclude any test projects or similar. -->
+    <!-- Only source code in the Directory entries listed in SourceDirectories is compiled. -->
     <SourceDirectories>
         <Directory>ClientPlugin</Directory>
     </SourceDirectories>
 
-    <!-- To specify asset files to be copied onto disk, use the AssetFolder tag.
-    <AssetFolder>Project/Assets/</AssetFolder> 
-    -->
+    <!-- Linux native dependencies. The archives are built by the linux-dependencies and
+         linux-native-wrappers repositories; during development they are pulled from the
+         sibling checkouts. The DXC shader compiler trio is not packaged yet and comes from
+         the recompiled-game workspace. -->
+    <Asset Name="LinuxDependencies"
+           Path="../../se1/linux-dependencies/dist/se2-dependencies.tar.gz"
+           Extract="true"
+           Placement="Bin"
+           Platforms="Linux" />
 
-    <!-- To specify a required NuGet package, use either a list of PackageReference tags OR a Config tag.
-    <NuGetReferences>
-      <PackageReference Include="OVRSharp" Version="1.2.0" />
-    </NuGetReferences> 
-    -->
+    <Asset Name="SteamDependencies"
+           Path="../../se1/linux-dependencies/dist/steam-dependencies.tar.gz"
+           Extract="true"
+           Placement="Bin"
+           Platforms="Linux" />
 
-    <!-- Optional tag that specifies what dependencies this plugin has. Dependencies will be automatically enabled when this plugin is enabled.
-    <DependencyIds>
-      <Id>viktor-ferenczi/se-performance-improvements</Id>
-    </DependencyIds> 
-    -->
+    <Asset Name="NativeWrappers"
+           Path="../../se1/linux-native-wrappers/dist/se2-native-wrappers.tar.gz"
+           Extract="true"
+           Placement="Bin"
+           Platforms="Linux" />
 
-    <!-- Optional tag that specifies whether the plugin is hidden. Hidden plugins only appear when they are enabled or searched for in the search box.
-    <Hidden>true</Hidden> 
-    -->
+    <!-- Bin-placed assets are copied flat next to the compiled plugin, so overlapping
+         files must not be listed twice. Only the DXC shader compiler trio is taken from
+         the recompiled-game workspace; DXVK and vkd3d-proton come from the archive above. -->
+    <Asset Name="DxcCompiler"
+           Path="../dotnet-game2-local/RenderingLibs/libdxcompiler.so"
+           Placement="Bin"
+           Platforms="Linux" />
+
+    <Asset Name="Dxil"
+           Path="../dotnet-game2-local/RenderingLibs/libdxil.so"
+           Placement="Bin"
+           Platforms="Linux" />
+
+    <Asset Name="DxcBridge"
+           Path="../dotnet-game2-local/RenderingLibs/libSE2DxcCompiler.so"
+           Placement="Bin"
+           Platforms="Linux" />
+
+    <!-- Windows Desktop implementation assemblies from the .NET runtime pack. Nothing on
+         the Linux code path executes them, but game assemblies and Pulsar patches reference
+         WinForms types, and the runtime must be able to resolve those tokens. -->
+    <Asset Name="WinDesktopStubs"
+           Path="../windesktop-stubs"
+           Placement="Bin"
+           Platforms="Linux" />
+
+    <Runtimes>CoreCLR</Runtimes>
+    <Platforms>Linux</Platforms>
+    <Hidden>true</Hidden>
 
     <!-- The current plugin version's commit hash -->
-    <Commit>TODO Git commit hash</Commit>
-
-    <!-- Optional list of alternate versions of the plugin, use it for test or custom builds
-    <AlternateVersions>
-      <Version>
-        <Name>Version Name</Name>
-        <Commit>Commit hash</Commit>
-      </Version>
-    </AlternateVersions> 
-    -->
-
-    <!-- Feel free to delete the comments and the commented out optional blocks once you're done -->
+    <Commit>TODO</Commit>
 
 </PluginData>

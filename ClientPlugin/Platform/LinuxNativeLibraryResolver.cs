@@ -200,14 +200,12 @@ internal static class LinuxNativeLibraryResolver
         }
 
         Add(Environment.GetEnvironmentVariable("SE2_NATIVE_DIR"));
+        // Pulsar copies Bin-placed plugin assets flat next to the compiled plugin assembly.
         string? pluginDirectory = Path.GetDirectoryName(typeof(LinuxNativeLibraryResolver).Assembly.Location);
         if (pluginDirectory is { Length: > 0 })
         {
+            Add(pluginDirectory);
             Add(Path.Combine(pluginDirectory, "native"));
-            Add(Path.Combine(pluginDirectory, "NativeWrappers"));
-            Add(Path.Combine(pluginDirectory, "LinuxDependencies"));
-            Add(Path.Combine(pluginDirectory, "DxcLibs"));
-            Add(Path.Combine(pluginDirectory, "SteamDependencies"));
         }
         Add(Path.Combine(AppContext.BaseDirectory, "native"));
         Console.WriteLine($"[LinuxCompat] native library directories: {string.Join(", ", directories)}");

@@ -17,6 +17,7 @@ public static class PatchInstaller
         if (!OperatingSystem.IsLinux() || Interlocked.Exchange(ref _installed, 1) != 0)
             return;
 
+        ManagedAssemblyResolver.Install();
         LinuxNativeLibraryResolver.Install();
 
         // Several installers resolve types by name, which only searches loaded assemblies.
@@ -30,6 +31,7 @@ public static class PatchInstaller
         NativeMemoryPatch.Install();
         MetadataDependenciesPatch.Install();
         NativeFileSystemPathCasePatch.Install();
+        ProjectLocatorPatch.Install();
         InputExtensionsPatch.Install();
         MainRenderTargetPatch.Install();
         PersistentDrawBatchPatch.Install();
