@@ -24,9 +24,14 @@ internal sealed class LinuxPlatformFactory : IPlatformFactory
 
     public INativeCrashReporter CreateNativeCrashReporter() => LinuxNativeCrashReporter.Instance;
 
-    public void RestartToReport() => Environment.Exit(-1);
+    /// <summary>
+    /// Windows restarts the game to upload the pending crash report and then terminates. Reports
+    /// to the game's developer are disabled on Linux (see <c>CrashReportingPatch</c>), so there
+    /// is nothing to restart for and only the termination is left.
+    /// </summary>
+    public void RestartToReport() => LinuxProcessTermination.Terminate(-1);
 
-    public void TerminateProcess(int exitCode) => Environment.Exit(exitCode);
+    public void TerminateProcess(int exitCode) => LinuxProcessTermination.Terminate(exitCode);
 
     /// <summary>
     /// The Linux splash screen is a borderless SDL image window with no text layer, so the
