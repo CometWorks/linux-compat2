@@ -76,7 +76,7 @@ a clear message instead of a wall of unresolved references.
 - Start the game with the `Modern` Pulsar executable (`Modern.exe` on Windows, `Modern.bin` on Linux)
   with the `-sources` command line option.
 - Click on the **Sources** button in Pulsar's dialog, then set up a development folder for your plugin.
-- Make sure to fill in the PluginHub registration XML (`ClientPluginTemplate.xml` in this repo) and load that as well.
+- Make sure to fill in the PluginHub registration XML (`LinuxCompat.xml` in this repo) and load that as well.
 - Select `Debug` mode and run `Modern`, then attach the debugger. That should allow debugging your plugin.
 - Select `Release` mode to test exactly how Pulsar will build and run your plugin on the player's machine.
 - The registered development folder shows up as a plugin you can select in the plugin list and save into a profile.
