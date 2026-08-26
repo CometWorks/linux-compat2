@@ -3,7 +3,8 @@
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>disable</ImplicitUsings>
-        <Nullable>disable</Nullable>
+        <Nullable>annotations</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
         <LangVersion>latestmajor</LangVersion>
     </PropertyGroup>
@@ -69,7 +70,14 @@
       <Reference Include="Game2.Game"><HintPath>$(Game2)/Game2.Game.dll</HintPath><Private>false</Private></Reference>
       <Reference Include="Game2.Plugin.Editor"><HintPath>$(Game2)/Game2.Plugin.Editor.dll</HintPath><Private>false</Private></Reference>
       <Reference Include="Game2.Simulation"><HintPath>$(Game2)/Game2.Simulation.dll</HintPath><Private>false</Private></Reference>
+      <Reference Include="SharpGen.Runtime"><HintPath>$(Game2)/SharpGen.Runtime.dll</HintPath><Private>false</Private></Reference>
+      <Reference Include="SixLabors.ImageSharp"><HintPath>$(Game2)/SixLabors.ImageSharp.dll</HintPath><Private>false</Private></Reference>
       <Reference Include="SpaceEngineers2"><HintPath>$(Game2)/SpaceEngineers2.dll</HintPath><Private>false</Private></Reference>
+      <Reference Include="Vortice.Direct3D12"><HintPath>$(Game2)/Vortice.Direct3D12.dll</HintPath><Private>false</Private></Reference>
+      <Reference Include="Vortice.DirectX"><HintPath>$(Game2)/Vortice.DirectX.dll</HintPath><Private>false</Private></Reference>
+      <Reference Include="Vortice.DXGI"><HintPath>$(Game2)/Vortice.DXGI.dll</HintPath><Private>false</Private></Reference>
+      <Reference Include="Vortice.Dxc"><HintPath>$(Game2)/Vortice.Dxc.dll</HintPath><Private>false</Private></Reference>
+      <Reference Include="Vortice.Mathematics"><HintPath>$(Game2)/Vortice.Mathematics.dll</HintPath><Private>false</Private></Reference>
       <Reference Include="VRage.AI"><HintPath>$(Game2)/VRage.AI.dll</HintPath><Private>false</Private></Reference>
       <Reference Include="VRage.Analytics"><HintPath>$(Game2)/VRage.Analytics.dll</HintPath><Private>false</Private></Reference>
       <Reference Include="VRage.Animation.Client"><HintPath>$(Game2)/VRage.Animation.Client.dll</HintPath><Private>false</Private></Reference>
