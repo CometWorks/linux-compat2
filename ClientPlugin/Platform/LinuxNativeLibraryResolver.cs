@@ -15,8 +15,6 @@ internal static class LinuxNativeLibraryResolver
     {
         SetEnvironmentVariable("DXVK_WSI_DRIVER", "SDL3");
         PreloadSdl();
-        if (Environment.GetEnvironmentVariable("SE2_DXCOMPILER_BACKEND") is not { Length: > 0 })
-            SetEnvironmentVariable("SE2_DXCOMPILER_BACKEND", NativePath("libdxcompiler.so"));
         if (IsEnabled("SE2_CPU_RENDERING"))
         {
             SetEnvironmentVariable("VK_LOADER_DRIVERS_SELECT", "*lvp*");

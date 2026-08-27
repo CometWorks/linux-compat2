@@ -23,9 +23,12 @@
 
     <!-- Linux native dependencies. The archives are built by the linux-dependencies and
          linux-native-wrappers repositories; during development they are pulled from the
-         sibling checkouts. se2-dependencies.tar.gz ships libdxcompiler.so and
-         libSE2DxcCompiler.so; only libdxil.so still comes from the recompiled-game
-         workspace. -->
+         sibling checkouts. Extracted Bin-placed assets land flat next to the compiled
+         plugin and Pulsar's asset resolver copies without overwrite, so a file an archive
+         already ships must never be listed again as a separate asset.
+         se2-dependencies.tar.gz carries the whole DXC shader compiler pair,
+         libdxcompiler.so and libSE2DxcCompiler.so, next to SDL3, DXVK, vkd3d-proton and
+         FMOD. -->
     <Asset Name="LinuxDependencies"
            Path="../../se1/linux-dependencies/dist/se2-dependencies.tar.gz"
            Extract="true"
@@ -41,15 +44,6 @@
     <Asset Name="NativeWrappers"
            Path="../../se1/linux-native-wrappers/dist/se2-native-wrappers.tar.gz"
            Extract="true"
-           Placement="Bin"
-           Platforms="Linux" />
-
-    <!-- Bin-placed assets are copied flat next to the compiled plugin, so overlapping
-         files must not be listed twice. DXVK, vkd3d-proton and the DXC compiler pair come
-         from the archive above; libdxil.so is the only shader-compiler piece it does not
-         package yet, so it is still taken from the recompiled-game workspace. -->
-    <Asset Name="Dxil"
-           Path="../dotnet-game2-local/RenderingLibs/libdxil.so"
            Placement="Bin"
            Platforms="Linux" />
 
