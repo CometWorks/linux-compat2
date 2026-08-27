@@ -23,8 +23,9 @@
 
     <!-- Linux native dependencies. The archives are built by the linux-dependencies and
          linux-native-wrappers repositories; during development they are pulled from the
-         sibling checkouts. The DXC shader compiler trio is not packaged yet and comes from
-         the recompiled-game workspace. -->
+         sibling checkouts. se2-dependencies.tar.gz ships libdxcompiler.so and
+         libSE2DxcCompiler.so; only libdxil.so still comes from the recompiled-game
+         workspace. -->
     <Asset Name="LinuxDependencies"
            Path="../../se1/linux-dependencies/dist/se2-dependencies.tar.gz"
            Extract="true"
@@ -44,20 +45,11 @@
            Platforms="Linux" />
 
     <!-- Bin-placed assets are copied flat next to the compiled plugin, so overlapping
-         files must not be listed twice. Only the DXC shader compiler trio is taken from
-         the recompiled-game workspace; DXVK and vkd3d-proton come from the archive above. -->
-    <Asset Name="DxcCompiler"
-           Path="../dotnet-game2-local/RenderingLibs/libdxcompiler.so"
-           Placement="Bin"
-           Platforms="Linux" />
-
+         files must not be listed twice. DXVK, vkd3d-proton and the DXC compiler pair come
+         from the archive above; libdxil.so is the only shader-compiler piece it does not
+         package yet, so it is still taken from the recompiled-game workspace. -->
     <Asset Name="Dxil"
            Path="../dotnet-game2-local/RenderingLibs/libdxil.so"
-           Placement="Bin"
-           Platforms="Linux" />
-
-    <Asset Name="DxcBridge"
-           Path="../dotnet-game2-local/RenderingLibs/libSE2DxcCompiler.so"
            Placement="Bin"
            Platforms="Linux" />
 

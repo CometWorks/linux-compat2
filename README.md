@@ -27,7 +27,8 @@ via "Exit to Linux".
   - `linux-dependencies/dist/se2-dependencies.tar.gz` (SDL3, DXVK, vkd3d-proton, FMOD)
   - `linux-dependencies/dist/steam-dependencies.tar.gz` (Steamworks pair)
   - `linux-native-wrappers/dist/se2-native-wrappers.tar.gz` (VRage native wrappers)
-  - the DXC shader compiler trio, currently from `dotnet-game2-local/RenderingLibs`
+  - `libdxil.so`, currently from `dotnet-game2-local/RenderingLibs` (the rest of the DXC
+    trio ships in `se2-dependencies.tar.gz`)
   - Windows Desktop runtime assemblies staged by `prepare-windesktop-stubs.sh`
 
 ## Setup
