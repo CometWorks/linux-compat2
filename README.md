@@ -27,7 +27,6 @@ via "Exit to Linux".
   - `linux-dependencies/dist/se2-dependencies.tar.gz` (SDL3, DXVK, vkd3d-proton, FMOD, DXC)
   - `linux-dependencies/dist/steam-dependencies.tar.gz` (Steamworks pair)
   - `linux-native-wrappers/dist/se2-native-wrappers.tar.gz` (VRage native wrappers)
-  - Windows Desktop runtime assemblies staged by `prepare-windesktop-stubs.sh`
 
 ## Setup
 
@@ -51,12 +50,6 @@ via "Exit to Linux".
        <DebugBuild>true</DebugBuild>
      </LocalFolderConfig>
    </DevFolder>
-   ```
-
-3. Stage the Windows Desktop assemblies once:
-
-   ```bash
-   ./prepare-windesktop-stubs.sh
    ```
 
 ## Launch

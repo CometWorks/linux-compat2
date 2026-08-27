@@ -47,14 +47,6 @@
            Placement="Bin"
            Platforms="Linux" />
 
-    <!-- Windows Desktop implementation assemblies from the .NET runtime pack. Nothing on
-         the Linux code path executes them, but game assemblies and Pulsar patches reference
-         WinForms types, and the runtime must be able to resolve those tokens. -->
-    <Asset Name="WinDesktopStubs"
-           Path="../windesktop-stubs"
-           Placement="Bin"
-           Platforms="Linux" />
-
     <Runtimes>CoreCLR</Runtimes>
     <Platforms>Linux</Platforms>
     <Hidden>true</Hidden>

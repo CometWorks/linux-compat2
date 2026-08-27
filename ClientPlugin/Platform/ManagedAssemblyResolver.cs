@@ -3,12 +3,10 @@ using System.Reflection;
 namespace LinuxCompat.Platform;
 
 /// <summary>
-/// Last-chance managed assembly resolver serving the plugin's Bin directory. Its main job is
-/// resolving the bundled Windows Desktop implementation assemblies (System.Windows.Forms and
-/// friends): nothing on the Linux code path executes them, but game assemblies and Pulsar
-/// patches reference WinForms types, and reading or JIT compiling such methods requires the
-/// tokens to resolve. Registered after Pulsar's own resolvers, so the game directory wins
-/// for anything it ships.
+/// Last-chance managed assembly resolver serving the plugin's Bin directory, so managed
+/// assemblies arriving with the dependency archives (Steamworks.NET) are found even when the
+/// requesting assembly was loaded from elsewhere. Registered after Pulsar's own resolvers,
+/// so the game directory wins for anything it ships.
 /// </summary>
 internal static class ManagedAssemblyResolver
 {
