@@ -2,8 +2,8 @@
 
 Client plugin that patches the original Space Engineers 2 binaries to run **natively on
 Linux**, loaded by [Pulsar](https://github.com/SpaceGT/Pulsar)'s Modern executable. No
-recompiled game code is involved: every change is applied at run time with Harmony (plus a
-single Cecil preloader rewrite of `VRage.Steam`), and the native Windows libraries are
+recompiled game code is involved: every change is applied at run time with Harmony or
+Pulsar's Cecil preloader, and the native Windows libraries are
 served by prebuilt Linux wrappers and translation layers (DXVK, vkd3d-proton, SDL3, FMOD).
 
 The patch set is the runtime migration of the recompiled-source prototype in
@@ -55,11 +55,20 @@ via "Exit to Linux".
 ## Launch
 
 ```bash
-DOTNET_ReadyToRun=0 ~/.config/Pulsar/Modern.bin -noUpdate -sources -noPrompt
+~/.config/Pulsar/Modern.bin -noUpdate -sources -noPrompt \
+  -game2 /path/to/SpaceEngineers2/Game2
 ```
 
-`DOTNET_ReadyToRun=0` is **required**: the shipped game assemblies are win-x64 ReadyToRun
-images, which the Linux runtime refuses to load unless the precompiled code is ignored.
+Before the game starts, Pulsar rewrites the shipped win-x64 ReadyToRun assemblies listed in
+`ClientPlugin/ReadyToRun.cs` as IL-only images in its normal preloader cache. When
+`DOTNET_ReadyToRun=0` or `COMPlus_ReadyToRun=0` is already set, LinuxCompat skips those
+targets. The `VRage.Steam` compatibility rewrite still runs in both modes.
+
+The game window remains fully hidden until the game reports that the application is ready.
+Wayland cannot present to an unmapped surface, so LinuxCompat skips the menu pin and
+end-of-UI-loading waits only during this hidden startup phase. `OnApplicationReady` then
+calls `NotifyApplicationReady`, allowing Pulsar to close its splash before LinuxCompat
+shows the game window.
 
 ## Development notes
 
@@ -92,6 +101,7 @@ images, which the Linux runtime refuses to load unless the precompiled code is i
   including the transpilers with their IL anchors, and the `VRage.Steam` Cecil prepatch
 - `ClientPlugin/Platform/` — the Linux platform implementation (SDL windowing/input,
   splash, HTTP, engine components, native library resolver, data folder)
-- `ClientPlugin/Preloader.cs` — Pulsar preloader hooks; `Finish()` installs everything
-  in-process before the game's `Main` runs
+- `ClientPlugin/Preloader.cs` — selects the ReadyToRun targets, rewrites `VRage.Steam`, and
+  installs the Harmony patches before the game's `Main` runs
+- `ClientPlugin/ReadyToRun.cs` — fixed list of shipped win-x64 ReadyToRun assemblies
 - `LinuxCompat.xml` — Pulsar registration including the native dependency assets

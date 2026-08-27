@@ -3,12 +3,9 @@ namespace LinuxCompat.Platform;
 /// <summary>
 /// The single source of truth for the game's data folder on Linux.
 ///
-/// The folder has to be resolved from unrelated places at very different moments: the
-/// platform factory builds <c>VRagePlatformCore.AppDataPath</c> once the engine exists, the
-/// Pulsar preloader needs the minidump directory before there is an engine at all, and the
-/// native library resolver needs the wrapper cache while the game's own assemblies are still
-/// loading. All of them derive it here, because a hand-copied rule that drifts sends saves,
-/// logs, or minidumps to a folder the rest of the game does not read.
+/// The platform factory builds <c>VRagePlatformCore.AppDataPath</c> once the engine exists,
+/// while the native library resolver needs its wrapper cache as the game's assemblies load.
+/// Both derive the root here so saves, logs, and caches stay under the same data folder.
 ///
 /// The root is <c>~/.config/SpaceEngineers2</c>, deliberately not the XDG data directory this
 /// port used before: it puts the game beside <c>~/.config/Pulsar</c>, which loads it.
@@ -24,8 +21,7 @@ internal static class LinuxDataFolder
 {
     /// <summary>
     /// The folder name under the configuration home. This is <c>VRageCore.ApplicationName</c>,
-    /// hard coded because the preloader resolves the path long before <c>VRageCore</c> exists,
-    /// and a constant both callers share is the point of this class.
+    /// hard coded because the native library resolver runs before <c>VRageCore</c> exists.
     /// </summary>
     private const string ApplicationName = "SpaceEngineers2";
 
@@ -33,11 +29,11 @@ internal static class LinuxDataFolder
 
     /// <summary>
     /// The game's data folder, holding <c>AppData</c> (SaveGames, Blueprints, EngineOptions)
-    /// and <c>Temp</c> (Logs, MiniDumps, CrashReports, ShaderCache), plus the caches this
+    /// and <c>Temp</c> (Logs, CrashReports, ShaderCache), plus the caches this
     /// plugin keeps beside them.
     ///
     /// This is the default location. The game's <c>-appData:</c> argument overrides it for
-    /// everything the engine stores, via <see cref="Resolve"/> — but not for this plugin's own
+    /// everything the engine stores, via <see cref="Resolve"/>, but not for this plugin's own
     /// caches, which belong to the installation rather than to a data profile.
     /// </summary>
     public static string Root { get; } = Path.Combine(ConfigurationHome(), ApplicationName);
@@ -48,7 +44,7 @@ internal static class LinuxDataFolder
     /// </summary>
     /// <param name="customUserDataPath">
     /// The path the engine already parsed out of the command line, or null for callers that
-    /// run too early to have one — then the raw command line is read here instead.
+    /// run too early to have one. Those callers read the raw command line instead.
     /// </param>
     public static string Resolve(string? customUserDataPath = null) =>
         customUserDataPath is { Length: > 0 } path ? path : CommandLineAppDataPath() ?? Root;
@@ -76,10 +72,14 @@ internal static class LinuxDataFolder
     {
         string configurationHome = Environment.GetFolderPath(
             Environment.SpecialFolder.ApplicationData,
-            Environment.SpecialFolderOption.DoNotVerify);
+            Environment.SpecialFolderOption.DoNotVerify
+        );
 
         return configurationHome is { Length: > 0 }
             ? configurationHome
-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config");
+            : Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".config"
+            );
     }
 }

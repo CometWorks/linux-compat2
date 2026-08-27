@@ -9,30 +9,15 @@ using Mono.Cecil;
 // ReSharper disable once UnusedType.Global
 public static class Preloader
 {
-    /// <summary>
-    /// Runs before any preloader patching, which is the last moment at which the process
-    /// environment can still be corrected. Restarts the process when the runtime and Steam
-    /// need variables that must already be set at their initialization.
-    /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public static void Initialize()
-    {
-        LinuxCompat.Platform.LinuxProcessEnvironment.Apply();
-    }
-
-    /// <summary>
-    /// VRage.Steam binds to Pulsar's Linux Steamworks wrapper at run time, and two of its
-    /// methods reference members the wrapper does not expose; those cannot be patched with
-    /// Harmony (their tokens no longer resolve), so the assembly is rewritten with Cecil
-    /// before it loads. Everything else is patched with Harmony from Finish.
-    /// </summary>
-    // ReSharper disable once UnusedMember.Global
-    public static IEnumerable<string> TargetDLLs => ["VRage.Steam.dll"];
+    public static IEnumerable<string> TargetDLLs =>
+        ReadyToRunDisabled() ? ["VRage.Steam.dll"] : ReadyToRun.Dlls;
 
     // ReSharper disable once UnusedMember.Global
     public static void Patch(AssemblyDefinition asmDef)
     {
-        SteamPrepatch.Apply(asmDef);
+        if (asmDef.Name.Name == "VRage.Steam")
+            SteamPrepatch.Apply(asmDef);
     }
 
     /// <summary>
@@ -45,4 +30,11 @@ public static class Preloader
     {
         PatchInstaller.InstallAll();
     }
+
+    private static bool ReadyToRunDisabled() =>
+        IsDisabled(Environment.GetEnvironmentVariable("DOTNET_ReadyToRun"))
+        || IsDisabled(Environment.GetEnvironmentVariable("COMPlus_ReadyToRun"));
+
+    private static bool IsDisabled(string? value) =>
+        value == "0" || string.Equals(value, "false", StringComparison.OrdinalIgnoreCase);
 }

@@ -14,8 +14,7 @@ namespace LinuxCompat.Patches.Install;
 /// <summary>
 /// Harmony patches against the shipped SpaceEngineers2.dll: platform factory selection in
 /// Program.Main, the WinForms install path report, Linux platform component registration in
-/// GameApp.CreateEngine, render configuration in GameApp.AddRender12, and the CPU-rendering
-/// pin wait budget in GameAppComponent.
+/// GameApp.CreateEngine, render configuration in GameApp.AddRender12, and startup UI waits.
 /// </summary>
 internal static class GameExePatches
 {
@@ -35,6 +34,12 @@ internal static class GameExePatches
             transpiler: InstallTools.Declared(typeof(GameExePatches), nameof(AddRender12Transpiler)));
         harmony.Patch(InstallTools.FindMethod(gameAppComponent, "WaitForPinning", typeof(TimeSpan), typeof(string)),
             prefix: InstallTools.Declared(typeof(GameExePatches), nameof(WaitForPinningPrefix)));
+
+        Type gameRenderComponent = InstallTools.FindType(
+            InstallTools.LoadAssembly("Game2.Client"),
+            "Keen.Game2.Client.RuntimeSystems.CoreScenes.GameRenderComponent");
+        harmony.Patch(InstallTools.FindMethod(gameRenderComponent, "EndOfUiLoading"),
+            prefix: InstallTools.Declared(typeof(GameAppComponentPatch), nameof(GameAppComponentPatch.EndOfUiLoadingPrefix)));
     }
 
     private static class GameState
@@ -167,5 +172,6 @@ internal static class GameExePatches
     public static void ConfigureRenderAdapter(EngineBuilder engine, RenderObjectBuilder render) =>
         GameAppPatch.ConfigureRender(engine.Configure<RenderConfigurationObjectBuilder>(), render);
 
-    private static void WaitForPinningPrefix(ref TimeSpan __0) => GameAppComponentPatch.Prefix(ref __0);
+    private static bool WaitForPinningPrefix(ref TimeSpan __0, ref Keen.VRage.Library.Threading.Task __result) =>
+        GameAppComponentPatch.Prefix(ref __0, ref __result);
 }

@@ -216,10 +216,10 @@ internal sealed class LinuxWindowsEngineComponent : EngineComponent, IPlatformWi
         if (_hidden || Window == null)
             return;
 
-        sdlWindow?.SetShowAllowed(true);
-        Window.ShowAndFocus();
         VRageCore core = Singleton<VRageCore>.Instance;
         core.NotifyApplicationReady();
+        sdlWindow?.SetShowAllowed(true);
+        Window.ShowAndFocus();
         core.NotifyApplicationShown();
     }
 }

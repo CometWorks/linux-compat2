@@ -91,7 +91,7 @@ public sealed unsafe class SdlPlatformWindow : IPlatformWindow
     }
 
     public nint WindowHandle => _window;
-    public bool DrawEnabled => ((ulong)Interlocked.Read(ref _windowFlags) & (WindowHidden | WindowMinimized | WindowOccluded)) == 0;
+    public bool DrawEnabled => ((ulong)Interlocked.Read(ref _windowFlags) & (WindowMinimized | WindowOccluded | (_showAllowed ? WindowHidden : 0))) == 0;
     public bool IsActive => ((ulong)Interlocked.Read(ref _windowFlags) & (WindowInputFocus | WindowMinimized)) == WindowInputFocus;
     public Vector2I ClientSize
     {
@@ -260,6 +260,7 @@ public sealed unsafe class SdlPlatformWindow : IPlatformWindow
     public void ToggleFullscreen() => _fullscreenToggle?.Invoke();
 
     internal void SetShowAllowed(bool allowed) => _showAllowed = allowed;
+    internal static bool IsVisibilityDeferred => Volatile.Read(ref _renderWindow) is { _showAllowed: false };
     internal static void SetWindowIcon(string path) => Interlocked.Exchange(ref _pendingIconPath, path);
     internal bool TryConsumeDrawableResize(out Vector2I size)
     {
