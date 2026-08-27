@@ -37,13 +37,17 @@ internal static class VulkanAdapterTypes
     /// it as something else, and null when the device is unknown or Vulkan is unavailable.
     /// </summary>
     public static bool? IsIntegrated(string deviceName) =>
-        DeviceTypes.Value.TryGetValue(deviceName, out uint type) ? type == PhysicalDeviceTypeIntegratedGpu : null;
+        DeviceTypes.Value.TryGetValue(deviceName, out uint type)
+            ? type == PhysicalDeviceTypeIntegratedGpu
+            : null;
 
     /// <summary>
     /// True when Vulkan reports the named device as a software rasterizer running on the CPU.
     /// </summary>
     public static bool? IsSoftware(string deviceName) =>
-        DeviceTypes.Value.TryGetValue(deviceName, out uint type) ? type == PhysicalDeviceTypeCpu : null;
+        DeviceTypes.Value.TryGetValue(deviceName, out uint type)
+            ? type == PhysicalDeviceTypeCpu
+            : null;
 
     private static unsafe Dictionary<string, uint> Query()
     {
@@ -82,13 +86,20 @@ internal static class VulkanAdapterTypes
                     result[deviceName] = *(uint*)(properties + DeviceTypeOffset);
             }
 
-            Console.WriteLine("[LinuxCompat] Vulkan device types: "
-                + string.Join(", ", result.Select(entry => $"{entry.Key}={DescribeType(entry.Value)}")));
+            Console.WriteLine(
+                "[LinuxCompat] Vulkan device types: "
+                    + string.Join(
+                        ", ",
+                        result.Select(entry => $"{entry.Key}={DescribeType(entry.Value)}")
+                    )
+            );
         }
         catch (Exception exception)
         {
             // Any failure just leaves the game's own detection in place.
-            Console.Error.WriteLine($"[LinuxCompat] WARNING: cannot query Vulkan device types: {exception.Message}");
+            Console.Error.WriteLine(
+                $"[LinuxCompat] WARNING: cannot query Vulkan device types: {exception.Message}"
+            );
         }
         finally
         {
@@ -98,35 +109,40 @@ internal static class VulkanAdapterTypes
                 {
                     vkDestroyInstance(instance, null);
                 }
-                catch (DllNotFoundException)
-                {
-                }
-                catch (EntryPointNotFoundException)
-                {
-                }
+                catch (DllNotFoundException) { }
+                catch (EntryPointNotFoundException) { }
             }
         }
         return result;
     }
 
-    private static string DescribeType(uint type) => type switch
-    {
-        0 => "other",
-        1 => "integrated",
-        2 => "discrete",
-        3 => "virtual",
-        4 => "cpu",
-        _ => type.ToString()
-    };
+    private static string DescribeType(uint type) =>
+        type switch
+        {
+            0 => "other",
+            1 => "integrated",
+            2 => "discrete",
+            3 => "virtual",
+            4 => "cpu",
+            _ => type.ToString(),
+        };
 
     [DllImport(Vulkan)]
-    private static extern unsafe int vkCreateInstance(byte* createInfo, void* allocator, nint* instance);
+    private static extern unsafe int vkCreateInstance(
+        byte* createInfo,
+        void* allocator,
+        nint* instance
+    );
 
     [DllImport(Vulkan)]
     private static extern unsafe void vkDestroyInstance(nint instance, void* allocator);
 
     [DllImport(Vulkan)]
-    private static extern unsafe int vkEnumeratePhysicalDevices(nint instance, uint* count, nint* devices);
+    private static extern unsafe int vkEnumeratePhysicalDevices(
+        nint instance,
+        uint* count,
+        nint* devices
+    );
 
     [DllImport(Vulkan)]
     private static extern unsafe void vkGetPhysicalDeviceProperties(nint device, byte* properties);

@@ -1,12 +1,12 @@
 using System.Collections.Concurrent;
+using Avalonia;
+using Avalonia.Input.TextInput;
 using Keen.VRage.Core.EngineComponents;
 using Keen.VRage.Core.Input;
 using Keen.VRage.Core.Platform;
 using Keen.VRage.DCS.Components;
 using Keen.VRage.Library.Diagnostics;
 using Keen.VRage.Library.Mathematics;
-using Avalonia;
-using Avalonia.Input.TextInput;
 
 namespace LinuxCompat.Platform;
 
@@ -33,12 +33,24 @@ public sealed class SdlInputComponent : EngineComponent, IPlatformInput
 
     public SdlInputComponent()
     {
-        var keyboardClass = new SdlInputDeviceClass("SDL Keyboard", GenericDeviceClass.Keyboard,
-            GenericDeviceClassFlags.Keyboard, KeyboardInputs.Inputs);
-        var mouseClass = new SdlInputDeviceClass("SDL Mouse", GenericDeviceClass.Mouse,
-            GenericDeviceClassFlags.Mouse, MouseInputs.Inputs);
-        _gamepadClass = new SdlInputDeviceClass("SDL Game Controller", GenericDeviceClass.GameController,
-            GenericDeviceClassFlags.GameController, GameControllerInputs.Inputs);
+        var keyboardClass = new SdlInputDeviceClass(
+            "SDL Keyboard",
+            GenericDeviceClass.Keyboard,
+            GenericDeviceClassFlags.Keyboard,
+            KeyboardInputs.Inputs
+        );
+        var mouseClass = new SdlInputDeviceClass(
+            "SDL Mouse",
+            GenericDeviceClass.Mouse,
+            GenericDeviceClassFlags.Mouse,
+            MouseInputs.Inputs
+        );
+        _gamepadClass = new SdlInputDeviceClass(
+            "SDL Game Controller",
+            GenericDeviceClass.GameController,
+            GenericDeviceClassFlags.GameController,
+            GameControllerInputs.Inputs
+        );
         _keyboard = new SdlKeyboardDevice(keyboardClass);
         _mouse = new SdlMouseDevice(mouseClass);
         keyboardClass.Add(_keyboard);
@@ -70,7 +82,12 @@ public sealed class SdlInputComponent : EngineComponent, IPlatformInput
         foreach (SdlGamepadEvent connection in connections)
         {
             ConnectGamepad(connection);
-            if (_pendingGamepadInputs.Remove(connection.InstanceId, out List<SdlGamepadEvent>? inputs))
+            if (
+                _pendingGamepadInputs.Remove(
+                    connection.InstanceId,
+                    out List<SdlGamepadEvent>? inputs
+                )
+            )
             {
                 foreach (SdlGamepadEvent input in inputs)
                     ApplyGamepad(input);
@@ -87,15 +104,23 @@ public sealed class SdlInputComponent : EngineComponent, IPlatformInput
                     keyboard.Apply(input.Code, input.Down);
                     if (_testInput && input.Code == 41)
                     {
-                        _sawKeyDown |= input.Down && keyboard.GetDigitalState(KeyboardInputs.Escape);
-                        _sawKeyUp |= !input.Down && _sawKeyDown && !keyboard.GetDigitalState(KeyboardInputs.Escape);
+                        _sawKeyDown |=
+                            input.Down && keyboard.GetDigitalState(KeyboardInputs.Escape);
+                        _sawKeyUp |=
+                            !input.Down
+                            && _sawKeyDown
+                            && !keyboard.GetDigitalState(KeyboardInputs.Escape);
                     }
                     break;
                 case SdlInputEventKind.MouseMotion:
                     var motionMouse = (SdlMouseDevice)_mouse;
                     motionMouse.ApplyMotion(input.X, input.Y, input.DeltaX, input.DeltaY);
-                    _sawMouseMotion |= _testInput
-                        && motionMouse.GetPointerState(MouseInputs.Position, PointerStateKind.Relative) != Vector2.Zero;
+                    _sawMouseMotion |=
+                        _testInput
+                        && motionMouse.GetPointerState(
+                            MouseInputs.Position,
+                            PointerStateKind.Relative
+                        ) != Vector2.Zero;
                     break;
                 case SdlInputEventKind.MouseButton:
                     var buttonMouse = (SdlMouseDevice)_mouse;
@@ -103,7 +128,10 @@ public sealed class SdlInputComponent : EngineComponent, IPlatformInput
                     if (_testInput && input.Code == 1)
                     {
                         _sawLeftDown |= input.Down && buttonMouse.GetDigitalState(MouseInputs.Left);
-                        _sawLeftUp |= !input.Down && _sawLeftDown && !buttonMouse.GetDigitalState(MouseInputs.Left);
+                        _sawLeftUp |=
+                            !input.Down
+                            && _sawLeftDown
+                            && !buttonMouse.GetDigitalState(MouseInputs.Left);
                     }
                     break;
                 case SdlInputEventKind.MouseWheel:
@@ -122,7 +150,15 @@ public sealed class SdlInputComponent : EngineComponent, IPlatformInput
                     break;
             }
         }
-        if (_testInput && !_testComplete && _sawKeyDown && _sawKeyUp && _sawMouseMotion && _sawLeftDown && _sawLeftUp)
+        if (
+            _testInput
+            && !_testComplete
+            && _sawKeyDown
+            && _sawKeyUp
+            && _sawMouseMotion
+            && _sawLeftDown
+            && _sawLeftUp
+        )
         {
             _testComplete = true;
             Log.Default.WriteLine("SE2_INPUT COMPLETE keyboard=Escape mouse=motion,left");
@@ -139,7 +175,8 @@ public sealed class SdlInputComponent : EngineComponent, IPlatformInput
                 return;
             }
             KeyValuePair<uint, SdlGamepadDevice> replaced = _gamepads.FirstOrDefault(pair =>
-                pair.Value.DeviceId == input.DeviceId && pair.Key != input.InstanceId);
+                pair.Value.DeviceId == input.DeviceId && pair.Key != input.InstanceId
+            );
             if (replaced.Value != null)
             {
                 replaced.Value.Clear();
@@ -166,7 +203,12 @@ public sealed class SdlInputComponent : EngineComponent, IPlatformInput
         }
         if (_pendingGamepadConnections.ContainsKey(input.InstanceId))
         {
-            if (!_pendingGamepadInputs.TryGetValue(input.InstanceId, out List<SdlGamepadEvent>? inputs))
+            if (
+                !_pendingGamepadInputs.TryGetValue(
+                    input.InstanceId,
+                    out List<SdlGamepadEvent>? inputs
+                )
+            )
                 _pendingGamepadInputs.Add(input.InstanceId, inputs = []);
             inputs.Add(input);
             return;
@@ -208,13 +250,19 @@ internal enum SdlInputEventKind
     MouseWheel,
     FocusLost,
     TextInput,
-    TextEditing
+    TextEditing,
 }
 
 internal readonly record struct SdlInputEvent(
-    SdlInputEventKind Kind, int Code = 0, bool Down = false,
-    float X = 0, float Y = 0, float DeltaX = 0, float DeltaY = 0,
-    string? Text = null);
+    SdlInputEventKind Kind,
+    int Code = 0,
+    bool Down = false,
+    float X = 0,
+    float Y = 0,
+    float DeltaX = 0,
+    float DeltaY = 0,
+    string? Text = null
+);
 
 internal static class SdlInputEvents
 {
@@ -237,8 +285,12 @@ internal sealed class SdlInputDeviceClass : IInputDeviceClass
     public event Action<IInputDevice>? DeviceConnected;
     public event Action<IInputDevice>? DeviceDisconnected;
 
-    internal SdlInputDeviceClass(string name, GenericDeviceClass genericClass,
-        GenericDeviceClassFlags genericClasses, IReadOnlyDictionary<InputId, InputDescription> inputs)
+    internal SdlInputDeviceClass(
+        string name,
+        GenericDeviceClass genericClass,
+        GenericDeviceClassFlags genericClasses,
+        IReadOnlyDictionary<InputId, InputDescription> inputs
+    )
     {
         Name = name;
         DeviceClassId = 64 + (int)genericClass;
@@ -247,12 +299,18 @@ internal sealed class SdlInputDeviceClass : IInputDeviceClass
         _inputsByName = inputs.ToDictionary(pair => pair.Value.Name, pair => pair.Key);
     }
 
-    public IEnumerable<InputId> GetInputs(InputType type) => _inputs.Keys.Where(input => input.Type == type);
+    public IEnumerable<InputId> GetInputs(InputType type) =>
+        _inputs.Keys.Where(input => input.Type == type);
+
     public IEnumerable<InputId> GetInputs(IInputDevice device, InputType type) => GetInputs(type);
-    public InputDescription GetDescription(InputId id) => _inputs.TryGetValue(id, out InputDescription value)
-        ? value
-        : new InputDescription("Unknown Input", "{Unknown Input}");
-    public InputId? TryFindInput(string inputName) => _inputsByName.TryGetValue(inputName, out InputId id) ? id : null;
+
+    public InputDescription GetDescription(InputId id) =>
+        _inputs.TryGetValue(id, out InputDescription value)
+            ? value
+            : new InputDescription("Unknown Input", "{Unknown Input}");
+
+    public InputId? TryFindInput(string inputName) =>
+        _inputsByName.TryGetValue(inputName, out InputId id) ? id : null;
 
     internal void Add(SdlInputDevice device)
     {
@@ -289,9 +347,13 @@ internal abstract class SdlInputDevice : IInputDevice
     }
 
     public void FillActive(HashSet<InputId> destination) => destination.UnionWith(Active);
+
     public void FillChanged(HashSet<InputId> destination) => destination.UnionWith(Changed);
+
     public bool GetDigitalState(InputId input) => Active.Contains(input);
+
     public virtual float GetAnalogState(InputId input) => 0;
+
     public virtual Vector2 GetPointerState(InputId input, PointerStateKind kind) => Vector2.Zero;
 }
 
@@ -302,7 +364,8 @@ internal sealed class SdlKeyboardDevice : SdlInputDevice
     public override string Name => "SDL Keyboard";
     public override string DeviceId => "SDL_KEYBOARD";
 
-    internal SdlKeyboardDevice(IInputDeviceClass deviceClass) : base(deviceClass) { }
+    internal SdlKeyboardDevice(IInputDeviceClass deviceClass)
+        : base(deviceClass) { }
 
     internal void Apply(int scancode, bool down)
     {
@@ -415,7 +478,7 @@ internal sealed class SdlKeyboardDevice : SdlInputDevice
             284 => KeyboardInputs.BrowserStop,
             285 => KeyboardInputs.BrowserRefresh,
             286 => KeyboardInputs.BrowserFavorites,
-            _ => null
+            _ => null,
         };
     }
 }
@@ -429,7 +492,8 @@ internal sealed class SdlMouseDevice : SdlInputDevice
     public override string Name => "SDL Mouse";
     public override string DeviceId => "SDL_MOUSE";
 
-    internal SdlMouseDevice(IInputDeviceClass deviceClass) : base(deviceClass) { }
+    internal SdlMouseDevice(IInputDeviceClass deviceClass)
+        : base(deviceClass) { }
 
     internal override void BeginFrame()
     {
@@ -465,7 +529,7 @@ internal sealed class SdlMouseDevice : SdlInputDevice
             3 => MouseInputs.Right,
             4 => MouseInputs.Button4,
             5 => MouseInputs.Button5,
-            _ => null
+            _ => null,
         };
         if (!input.HasValue || Active.Contains(input.Value) == down)
             return;
@@ -498,13 +562,17 @@ internal sealed class SdlMouseDevice : SdlInputDevice
         _wheel = Vector2.Zero;
     }
 
-    public override float GetAnalogState(InputId input) => input == MouseInputs.VerticalWheel
-        ? _wheel.Y
-        : input == MouseInputs.HorizontalWheel ? _wheel.X : 0;
+    public override float GetAnalogState(InputId input) =>
+        input == MouseInputs.VerticalWheel ? _wheel.Y
+        : input == MouseInputs.HorizontalWheel ? _wheel.X
+        : 0;
 
-    public override Vector2 GetPointerState(InputId input, PointerStateKind kind) => input == MouseInputs.Position
-        ? kind == PointerStateKind.Relative ? _relative : _absolute
-        : Vector2.Zero;
+    public override Vector2 GetPointerState(InputId input, PointerStateKind kind) =>
+        input == MouseInputs.Position
+            ? kind == PointerStateKind.Relative
+                ? _relative
+                : _absolute
+            : Vector2.Zero;
 }
 
 internal sealed class SdlGamepadDevice : SdlInputDevice
@@ -519,7 +587,8 @@ internal sealed class SdlGamepadDevice : SdlInputDevice
     public override string Name { get; }
     public override string DeviceId { get; }
 
-    internal SdlGamepadDevice(IInputDeviceClass deviceClass, string name, string deviceId) : base(deviceClass)
+    internal SdlGamepadDevice(IInputDeviceClass deviceClass, string name, string deviceId)
+        : base(deviceClass)
     {
         Name = name;
         DeviceId = deviceId;
@@ -529,12 +598,48 @@ internal sealed class SdlGamepadDevice : SdlInputDevice
     {
         switch (axis)
         {
-            case 0: Change(ref _leftX, Normalize(raw, 7849, 32767), GameControllerInputs.LeftThumbstickX); break;
-            case 1: Change(ref _leftY, Normalize(-(int)raw, 7849, 32767), GameControllerInputs.LeftThumbstickY); break;
-            case 2: Change(ref _rightX, Normalize(raw, 8689, 32767), GameControllerInputs.RightThumbstickX); break;
-            case 3: Change(ref _rightY, Normalize(-(int)raw, 8689, 32767), GameControllerInputs.RightThumbstickY); break;
-            case 4: Change(ref _leftTrigger, Normalize(raw, 3855, 32767), GameControllerInputs.LeftTrigger); break;
-            case 5: Change(ref _rightTrigger, Normalize(raw, 3855, 32767), GameControllerInputs.RightTrigger); break;
+            case 0:
+                Change(
+                    ref _leftX,
+                    Normalize(raw, 7849, 32767),
+                    GameControllerInputs.LeftThumbstickX
+                );
+                break;
+            case 1:
+                Change(
+                    ref _leftY,
+                    Normalize(-(int)raw, 7849, 32767),
+                    GameControllerInputs.LeftThumbstickY
+                );
+                break;
+            case 2:
+                Change(
+                    ref _rightX,
+                    Normalize(raw, 8689, 32767),
+                    GameControllerInputs.RightThumbstickX
+                );
+                break;
+            case 3:
+                Change(
+                    ref _rightY,
+                    Normalize(-(int)raw, 8689, 32767),
+                    GameControllerInputs.RightThumbstickY
+                );
+                break;
+            case 4:
+                Change(
+                    ref _leftTrigger,
+                    Normalize(raw, 3855, 32767),
+                    GameControllerInputs.LeftTrigger
+                );
+                break;
+            case 5:
+                Change(
+                    ref _rightTrigger,
+                    Normalize(raw, 3855, 32767),
+                    GameControllerInputs.RightTrigger
+                );
+                break;
         }
     }
 
@@ -556,7 +661,7 @@ internal sealed class SdlGamepadDevice : SdlInputDevice
             12 => GameControllerInputs.DPadDown,
             13 => GameControllerInputs.DPadLeft,
             14 => GameControllerInputs.DPadRight,
-            _ => null
+            _ => null,
         };
         if (!input.HasValue || Active.Contains(input.Value) == down)
             return;
@@ -567,7 +672,8 @@ internal sealed class SdlGamepadDevice : SdlInputDevice
             Active.Remove(input.Value);
     }
 
-    public override float GetAnalogState(InputId input) => input == GameControllerInputs.LeftThumbstickX ? _leftX
+    public override float GetAnalogState(InputId input) =>
+        input == GameControllerInputs.LeftThumbstickX ? _leftX
         : input == GameControllerInputs.LeftThumbstickY ? _leftY
         : input == GameControllerInputs.RightThumbstickX ? _rightX
         : input == GameControllerInputs.RightThumbstickY ? _rightY

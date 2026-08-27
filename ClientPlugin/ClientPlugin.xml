@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<PluginData xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="GitHubPlugin">
+
+    <Id>linux-compat</Id>
+    <RepoId>CometWorks/linux-compat2</RepoId>
+
+    <FriendlyName>LinuxCompat</FriendlyName>
+    <Author>Viktor</Author>
+
+    <Tooltip>Linux support for Space Engineers 2</Tooltip>
+    <Description>Patches Space Engineers 2 to run natively on Linux. The plugin loads automatically when needed.</Description>
+
+    <SourceDirectories>
+        <Directory>ClientPlugin</Directory>
+    </SourceDirectories>
+
+    <Asset Name="LinuxDependencies"
+           Path="../se2-zips/se2-dependencies.tar.gz"
+           Extract="true"
+           Placement="Bin" />
+
+    <Asset Name="SteamDependencies"
+           Path="../se2-zips/steam-dependencies.tar.gz"
+           Extract="true"
+           Placement="Bin" />
+
+    <Asset Name="NativeWrappers"
+           Path="../se2-zips/se2-native-wrappers.tar.gz"
+           Extract="true"
+           Placement="Bin" />
+
+    <Runtimes>CoreCLR</Runtimes>
+    <Platforms>Linux</Platforms>
+    <Hidden>true</Hidden>
+
+    <Commit>TODO</Commit>
+
+</PluginData>

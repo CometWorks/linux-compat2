@@ -25,9 +25,11 @@ internal static class SdlThread
     internal static event EventHandler? Event;
     internal static event Action? Tick;
 
-    internal static bool IsCurrent => Environment.CurrentManagedThreadId == Volatile.Read(ref _threadId);
+    internal static bool IsCurrent =>
+        Environment.CurrentManagedThreadId == Volatile.Read(ref _threadId);
     internal static string? VideoDriver { get; private set; }
-    internal static bool IsWayland => string.Equals(VideoDriver, "wayland", StringComparison.OrdinalIgnoreCase);
+    internal static bool IsWayland =>
+        string.Equals(VideoDriver, "wayland", StringComparison.OrdinalIgnoreCase);
 
     internal static void Start()
     {
@@ -39,26 +41,25 @@ internal static class SdlThread
             {
                 Started.Reset();
                 _initializationError = null;
-                _thread = new Thread(Run)
-                {
-                    IsBackground = true,
-                    Name = "LinuxCompat SDL"
-                };
+                _thread = new Thread(Run) { IsBackground = true, Name = "LinuxCompat SDL" };
                 _thread.Start();
             }
         }
 
         if (!Started.Wait(TimeSpan.FromSeconds(10)))
-            throw new TimeoutException("SDL video initialization did not complete within 10 seconds.");
+            throw new TimeoutException(
+                "SDL video initialization did not complete within 10 seconds."
+            );
         if (_initializationError != null)
             ExceptionDispatchInfo.Capture(_initializationError).Throw();
     }
 
-    internal static void Invoke(Action action) => Invoke(() =>
-    {
-        action();
-        return true;
-    });
+    internal static void Invoke(Action action) =>
+        Invoke(() =>
+        {
+            action();
+            return true;
+        });
 
     internal static T Invoke<T>(Func<T> action)
     {
@@ -66,7 +67,9 @@ internal static class SdlThread
         if (IsCurrent)
             return action();
 
-        var completion = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var completion = new TaskCompletionSource<T>(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
         lock (Sync)
         {
             if (_stopping || _thread == null)
@@ -87,38 +90,42 @@ internal static class SdlThread
         return completion.Task.GetAwaiter().GetResult();
     }
 
-    internal static string GetClipboardText() => Invoke(() =>
-    {
-        SDL_ClearError();
-        nint text = SDL_GetClipboardText();
-        if (text == 0)
-            throw new InvalidOperationException($"SDL clipboard read failed: {GetError()}");
-        try
+    internal static string GetClipboardText() =>
+        Invoke(() =>
         {
-            string result = Marshal.PtrToStringUTF8(text) ?? string.Empty;
-            string error = GetError();
-            if (result.Length == 0 && error.Length != 0)
-                throw new InvalidOperationException($"SDL clipboard read failed: {error}");
-            return result;
-        }
-        finally
-        {
-            SDL_free(text);
-        }
-    });
+            SDL_ClearError();
+            nint text = SDL_GetClipboardText();
+            if (text == 0)
+                throw new InvalidOperationException($"SDL clipboard read failed: {GetError()}");
+            try
+            {
+                string result = Marshal.PtrToStringUTF8(text) ?? string.Empty;
+                string error = GetError();
+                if (result.Length == 0 && error.Length != 0)
+                    throw new InvalidOperationException($"SDL clipboard read failed: {error}");
+                return result;
+            }
+            finally
+            {
+                SDL_free(text);
+            }
+        });
 
-    internal static void SetClipboardText(string text) => Invoke(() =>
-    {
-        if (!SDL_SetClipboardText(text))
-            throw new InvalidOperationException($"SDL clipboard write failed: {GetError()}");
-    });
+    internal static void SetClipboardText(string text) =>
+        Invoke(() =>
+        {
+            if (!SDL_SetClipboardText(text))
+                throw new InvalidOperationException($"SDL clipboard write failed: {GetError()}");
+        });
 
     internal static void SyncFrame()
     {
         Start();
         if (IsCurrent)
             return;
-        var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var completion = new TaskCompletionSource<bool>(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
         lock (Sync)
         {
             if (_stopping || _thread == null)
@@ -165,7 +172,9 @@ internal static class SdlThread
             SDL_SetHint("SDL_IME_IMPLEMENTED_UI", "composition");
             SDL_SetHint("SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS", "1");
             if (!SDL_Init(InitVideo | InitJoystick | InitGamepad))
-                throw new InvalidOperationException($"SDL video initialization failed: {GetError()}");
+                throw new InvalidOperationException(
+                    $"SDL video initialization failed: {GetError()}"
+                );
             VideoDriver = Marshal.PtrToStringUTF8(SDL_GetCurrentVideoDriver());
             Console.WriteLine($"[LinuxCompat] SDL3 video driver: {VideoDriver ?? "unknown"}");
             SdlGamepads.Initialize();
@@ -227,7 +236,9 @@ internal static class SdlThread
             while (Pending.TryDequeue(out Action? action))
                 action();
             while (FrameWaiters.TryDequeue(out TaskCompletionSource<bool>? completion))
-                completion.SetException(new InvalidOperationException("SDL shut down before completing the frame."));
+                completion.SetException(
+                    new InvalidOperationException("SDL shut down before completing the frame.")
+                );
             SdlGamepads.Shutdown();
             SDL_Quit();
             VideoDriver = null;
@@ -248,102 +259,172 @@ internal static class SdlThread
     [StructLayout(LayoutKind.Explicit, Size = 128)]
     internal struct SdlEvent
     {
-        [FieldOffset(0)] public uint Type;
-        [FieldOffset(0)] public SdlWindowEvent Window;
-        [FieldOffset(0)] public SdlKeyboardEvent Keyboard;
-        [FieldOffset(0)] public SdlMouseMotionEvent Motion;
-        [FieldOffset(0)] public SdlMouseButtonEvent Button;
-        [FieldOffset(0)] public SdlMouseWheelEvent Wheel;
-        [FieldOffset(0)] public SdlTextInputEvent TextInput;
-        [FieldOffset(0)] public SdlTextEditingEvent TextEditing;
-        [FieldOffset(0)] public SdlGamepadAxisEvent GamepadAxis;
-        [FieldOffset(0)] public SdlGamepadButtonEvent GamepadButton;
-        [FieldOffset(0)] public SdlGamepadDeviceEvent GamepadDevice;
-        [FieldOffset(0)] public SdlJoystickHatEvent JoystickHat;
+        [FieldOffset(0)]
+        public uint Type;
+
+        [FieldOffset(0)]
+        public SdlWindowEvent Window;
+
+        [FieldOffset(0)]
+        public SdlKeyboardEvent Keyboard;
+
+        [FieldOffset(0)]
+        public SdlMouseMotionEvent Motion;
+
+        [FieldOffset(0)]
+        public SdlMouseButtonEvent Button;
+
+        [FieldOffset(0)]
+        public SdlMouseWheelEvent Wheel;
+
+        [FieldOffset(0)]
+        public SdlTextInputEvent TextInput;
+
+        [FieldOffset(0)]
+        public SdlTextEditingEvent TextEditing;
+
+        [FieldOffset(0)]
+        public SdlGamepadAxisEvent GamepadAxis;
+
+        [FieldOffset(0)]
+        public SdlGamepadButtonEvent GamepadButton;
+
+        [FieldOffset(0)]
+        public SdlGamepadDeviceEvent GamepadDevice;
+
+        [FieldOffset(0)]
+        public SdlJoystickHatEvent JoystickHat;
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 28)]
     internal struct SdlWindowEvent
     {
-        [FieldOffset(16)] public uint WindowId;
+        [FieldOffset(16)]
+        public uint WindowId;
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 40)]
     internal struct SdlKeyboardEvent
     {
-        [FieldOffset(16)] public uint WindowId;
-        [FieldOffset(24)] public int Scancode;
+        [FieldOffset(16)]
+        public uint WindowId;
+
+        [FieldOffset(24)]
+        public int Scancode;
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 44)]
     internal struct SdlMouseMotionEvent
     {
-        [FieldOffset(16)] public uint WindowId;
-        [FieldOffset(28)] public float X;
-        [FieldOffset(32)] public float Y;
-        [FieldOffset(36)] public float Xrel;
-        [FieldOffset(40)] public float Yrel;
+        [FieldOffset(16)]
+        public uint WindowId;
+
+        [FieldOffset(28)]
+        public float X;
+
+        [FieldOffset(32)]
+        public float Y;
+
+        [FieldOffset(36)]
+        public float Xrel;
+
+        [FieldOffset(40)]
+        public float Yrel;
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 36)]
     internal struct SdlMouseButtonEvent
     {
-        [FieldOffset(16)] public uint WindowId;
-        [FieldOffset(24)] public byte Button;
+        [FieldOffset(16)]
+        public uint WindowId;
+
+        [FieldOffset(24)]
+        public byte Button;
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 36)]
     internal struct SdlMouseWheelEvent
     {
-        [FieldOffset(16)] public uint WindowId;
-        [FieldOffset(24)] public float X;
-        [FieldOffset(28)] public float Y;
-        [FieldOffset(32)] public uint Direction;
+        [FieldOffset(16)]
+        public uint WindowId;
+
+        [FieldOffset(24)]
+        public float X;
+
+        [FieldOffset(28)]
+        public float Y;
+
+        [FieldOffset(32)]
+        public uint Direction;
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 32)]
     internal struct SdlTextInputEvent
     {
-        [FieldOffset(16)] public uint WindowId;
-        [FieldOffset(24)] public nint Text;
+        [FieldOffset(16)]
+        public uint WindowId;
+
+        [FieldOffset(24)]
+        public nint Text;
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 40)]
     internal struct SdlTextEditingEvent
     {
-        [FieldOffset(16)] public uint WindowId;
-        [FieldOffset(24)] public nint Text;
-        [FieldOffset(32)] public int Start;
-        [FieldOffset(36)] public int Length;
+        [FieldOffset(16)]
+        public uint WindowId;
+
+        [FieldOffset(24)]
+        public nint Text;
+
+        [FieldOffset(32)]
+        public int Start;
+
+        [FieldOffset(36)]
+        public int Length;
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 28)]
     internal struct SdlGamepadAxisEvent
     {
-        [FieldOffset(16)] public uint Which;
-        [FieldOffset(20)] public byte Axis;
-        [FieldOffset(24)] public short Value;
+        [FieldOffset(16)]
+        public uint Which;
+
+        [FieldOffset(20)]
+        public byte Axis;
+
+        [FieldOffset(24)]
+        public short Value;
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 24)]
     internal struct SdlGamepadButtonEvent
     {
-        [FieldOffset(16)] public uint Which;
-        [FieldOffset(20)] public byte Button;
+        [FieldOffset(16)]
+        public uint Which;
+
+        [FieldOffset(20)]
+        public byte Button;
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 20)]
     internal struct SdlGamepadDeviceEvent
     {
-        [FieldOffset(16)] public uint Which;
+        [FieldOffset(16)]
+        public uint Which;
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 24)]
     internal struct SdlJoystickHatEvent
     {
-        [FieldOffset(16)] public uint Which;
-        [FieldOffset(20)] public byte Hat;
-        [FieldOffset(21)] public byte Value;
+        [FieldOffset(16)]
+        public uint Which;
+
+        [FieldOffset(20)]
+        public byte Hat;
+
+        [FieldOffset(21)]
+        public byte Value;
     }
 
     [DllImport(Sdl, EntryPoint = "SDL_Init")]
@@ -375,7 +456,9 @@ internal static class SdlThread
 
     [DllImport(Sdl, EntryPoint = "SDL_SetClipboardText")]
     [return: MarshalAs(UnmanagedType.I1)]
-    private static extern bool SDL_SetClipboardText([MarshalAs(UnmanagedType.LPUTF8Str)] string text);
+    private static extern bool SDL_SetClipboardText(
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string text
+    );
 
     [DllImport(Sdl, EntryPoint = "SDL_free")]
     private static extern void SDL_free(nint memory);

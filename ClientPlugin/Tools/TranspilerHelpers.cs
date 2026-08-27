@@ -15,7 +15,9 @@ namespace ClientPlugin.Tools;
 
 public static class TranspilerHelpers
 {
-    private static readonly bool DisableCodeValidations = (Environment.GetEnvironmentVariable("SE2_PLUGIN_DISABLE_METHOD_VERIFICATION") ?? "0") != "0";
+    private static readonly bool DisableCodeValidations =
+        (Environment.GetEnvironmentVariable("SE2_PLUGIN_DISABLE_METHOD_VERIFICATION") ?? "0")
+        != "0";
 
     public delegate bool OpcodePredicate(OpCode opcode);
 
@@ -23,7 +25,10 @@ public static class TranspilerHelpers
 
     public delegate bool FieldInfoPredicate(FieldInfo fi);
 
-    public static List<int> FindAllIndex(this IEnumerable<CodeInstruction> il, CodeInstructionPredicate predicate)
+    public static List<int> FindAllIndex(
+        this IEnumerable<CodeInstruction> il,
+        CodeInstructionPredicate predicate
+    )
     {
         return il.Select((instruction, index) => new { Instruction = instruction, Index = index })
             .Where(pair => predicate(pair.Instruction))
@@ -33,27 +38,41 @@ public static class TranspilerHelpers
 
     public static FieldInfo GetField(this List<CodeInstruction> il, FieldInfoPredicate predicate)
     {
-        var ci = il.Find(i => (i.opcode == OpCodes.Ldfld || i.opcode == OpCodes.Stfld) && i.operand is FieldInfo fi && predicate(fi));
+        var ci = il.Find(i =>
+            (i.opcode == OpCodes.Ldfld || i.opcode == OpCodes.Stfld)
+            && i.operand is FieldInfo fi
+            && predicate(fi)
+        );
         if (ci == null)
-            throw new CodeInstructionNotFound("No code instruction found loading or storing a field matching the given predicate");
+            throw new CodeInstructionNotFound(
+                "No code instruction found loading or storing a field matching the given predicate"
+            );
 
         return (FieldInfo)ci.operand;
     }
 
     public static MethodInfo FindPropertyGetter(this List<CodeInstruction> il, string name)
     {
-        var ci = il.Find(i => i.opcode == OpCodes.Call && i.operand is MethodInfo fi && fi.Name == $"get_{name}");
+        var ci = il.Find(i =>
+            i.opcode == OpCodes.Call && i.operand is MethodInfo fi && fi.Name == $"get_{name}"
+        );
         if (ci == null)
-            throw new CodeInstructionNotFound("No code instruction found getting or setting a property matching the given predicate");
+            throw new CodeInstructionNotFound(
+                "No code instruction found getting or setting a property matching the given predicate"
+            );
 
         return (MethodInfo)ci.operand;
     }
 
     public static MethodInfo FindPropertySetter(this List<CodeInstruction> il, string name)
     {
-        var ci = il.Find(i => i.opcode == OpCodes.Call && i.operand is MethodInfo fi && fi.Name == $"set_{name}");
+        var ci = il.Find(i =>
+            i.opcode == OpCodes.Call && i.operand is MethodInfo fi && fi.Name == $"set_{name}"
+        );
         if (ci == null)
-            throw new CodeInstructionNotFound("No code instruction found getting or setting a property matching the given predicate");
+            throw new CodeInstructionNotFound(
+                "No code instruction found getting or setting a property matching the given predicate"
+            );
 
         return (MethodInfo)ci.operand;
     }
@@ -69,9 +88,13 @@ public static class TranspilerHelpers
 
     public static void RemoveFieldInitialization(this List<CodeInstruction> il, string name)
     {
-        var i = il.FindIndex(ci => ci.opcode == OpCodes.Stfld && ci.operand is FieldInfo fi && fi.Name.Contains(name));
+        var i = il.FindIndex(ci =>
+            ci.opcode == OpCodes.Stfld && ci.operand is FieldInfo fi && fi.Name.Contains(name)
+        );
         if (i < 2)
-            throw new CodeInstructionNotFound($"No code instruction found initializing field: {name}");
+            throw new CodeInstructionNotFound(
+                $"No code instruction found initializing field: {name}"
+            );
 
         Debug.Assert(il[i - 2].opcode == OpCodes.Ldarg_0);
         Debug.Assert(il[i - 1].opcode == OpCodes.Newobj);
@@ -79,17 +102,108 @@ public static class TranspilerHelpers
         il.RemoveRange(i - 2, 3);
     }
 
+    public static MethodInfo FindMethod(Type type, string name, params Type[] parameters)
+    {
+        MethodInfo? method =
+            parameters.Length == 0
+                ? AccessTools.DeclaredMethod(type, name)
+                : AccessTools.DeclaredMethod(type, name, parameters);
+        return method ?? throw new MissingMethodException(type.FullName, name);
+    }
+
+    /// <summary>Finds the single method whose name contains the given fragment (used for
+    /// compiler-generated local functions whose ordinal suffix changes between builds).</summary>
+    public static MethodInfo FindMethodContaining(Type type, string fragment)
+    {
+        MethodInfo[] matches = type.GetMethods(
+                BindingFlags.Instance
+                    | BindingFlags.Static
+                    | BindingFlags.Public
+                    | BindingFlags.NonPublic
+            )
+            .Where(method => method.Name.Contains(fragment, StringComparison.Ordinal))
+            .ToArray();
+        if (matches.Length != 1)
+            throw new MissingMethodException(
+                type.FullName,
+                $"*{fragment}* (found {matches.Length})"
+            );
+        return matches[0];
+    }
+
+    public static void AssertCount(int actual, int expected, string what)
+    {
+        if (actual != expected)
+            throw new InvalidOperationException(
+                $"[LinuxCompat] Patch anchor mismatch: expected {expected} {what}, found {actual}. "
+                    + "The game update likely moved this patch target."
+            );
+    }
+
+    public static bool CallsMethod(CodeInstruction instruction, MethodBase method) =>
+        (instruction.opcode == OpCodes.Call || instruction.opcode == OpCodes.Callvirt)
+        && instruction.operand is MethodBase operand
+        && MethodsMatch(operand, method);
+
+    /// <summary>Replaces every call to <paramref name="from"/> with a call to the static
+    /// stack-compatible adapter <paramref name="to"/>, asserting the expected match count.</summary>
+    public static List<CodeInstruction> ReplaceCalls(
+        IEnumerable<CodeInstruction> instructions,
+        MethodBase from,
+        MethodInfo to,
+        int expected,
+        string what
+    )
+    {
+        List<CodeInstruction> result = [.. instructions];
+        int count = 0;
+        for (int i = 0; i < result.Count; i++)
+        {
+            if (!CallsMethod(result[i], from))
+                continue;
+            CodeInstruction replacement = new(OpCodes.Call, to);
+            replacement.labels.AddRange(result[i].labels);
+            replacement.blocks.AddRange(result[i].blocks);
+            result[i] = replacement;
+            count++;
+        }
+        AssertCount(count, expected, what);
+        return result;
+    }
+
+    private static bool MethodsMatch(MethodBase left, MethodBase right)
+    {
+        if (ReferenceEquals(left, right))
+            return true;
+        if (left.Name != right.Name || left.DeclaringType != right.DeclaringType)
+            return false;
+        ParameterInfo[] leftParameters = left.GetParameters();
+        ParameterInfo[] rightParameters = right.GetParameters();
+        if (leftParameters.Length != rightParameters.Length)
+            return false;
+        for (int i = 0; i < leftParameters.Length; i++)
+            if (leftParameters[i].ParameterType != rightParameters[i].ParameterType)
+                return false;
+        return true;
+    }
+
     public static string Hash(this List<CodeInstruction> il)
     {
         return il.HashInstructions().CombineHashCodes().ToString("x8");
     }
 
-    public static void VerifyCodeHash(this List<CodeInstruction> il, MethodBase patchedMethod, string expected)
+    public static void VerifyCodeHash(
+        this List<CodeInstruction> il,
+        MethodBase patchedMethod,
+        string expected
+    )
     {
         var actual = il.Hash();
         if (actual != expected && !DisableCodeValidations)
         {
-            throw new Exception($"Detected code change in {patchedMethod.Name}: expected {expected}, actual {actual}");
+            throw new Exception(
+                $"Detected code change in {patchedMethod.Name}: expected {expected}, actual {actual}"
+            );
         }
     }
 
@@ -152,7 +266,11 @@ public static class TranspilerHelpers
 
         var fieldInfo = argument as FieldInfo;
         if (fieldInfo != null)
-            return fieldInfo.FieldType.FullDescription() + " " + fieldInfo.DeclaringType.FullDescription() + "::" + fieldInfo.Name;
+            return fieldInfo.FieldType.FullDescription()
+                + " "
+                + fieldInfo.DeclaringType.FullDescription()
+                + "::"
+                + fieldInfo.Name;
 
         switch (argument)
         {
@@ -183,22 +301,44 @@ public static class TranspilerHelpers
         }
     }
 
-    public static void RecordOriginalCode(this List<CodeInstruction> il, MethodBase patchedMethod = null, [CallerFilePath] string callerFilePath = "", [CallerMemberName] string callerMemberName = "")
+    public static void RecordOriginalCode(
+        this List<CodeInstruction> il,
+        MethodBase patchedMethod = null,
+        [CallerFilePath] string callerFilePath = "",
+        [CallerMemberName] string callerMemberName = ""
+    )
     {
         RecordCode(il, callerFilePath, callerMemberName, patchedMethod, "original");
     }
 
-    public static void RecordPatchedCode(this List<CodeInstruction> il, MethodBase patchedMethod = null, [CallerFilePath] string callerFilePath = "", [CallerMemberName] string callerMemberName = "")
+    public static void RecordPatchedCode(
+        this List<CodeInstruction> il,
+        MethodBase patchedMethod = null,
+        [CallerFilePath] string callerFilePath = "",
+        [CallerMemberName] string callerMemberName = ""
+    )
     {
         RecordCode(il, callerFilePath, callerMemberName, patchedMethod, "patched");
     }
 
-    public static void RecordCustomCode(this List<CodeInstruction> il, string suffix, MethodBase patchedMethod = null, [CallerFilePath] string callerFilePath = "", [CallerMemberName] string callerMemberName = "")
+    public static void RecordCustomCode(
+        this List<CodeInstruction> il,
+        string suffix,
+        MethodBase patchedMethod = null,
+        [CallerFilePath] string callerFilePath = "",
+        [CallerMemberName] string callerMemberName = ""
+    )
     {
         RecordCode(il, callerFilePath, callerMemberName, patchedMethod, suffix);
     }
 
-    private static void RecordCode(List<CodeInstruction> il, string callerFilePath, string callerMemberName, MethodBase patchedMethod, string suffix)
+    private static void RecordCode(
+        List<CodeInstruction> il,
+        string callerFilePath,
+        string callerMemberName,
+        MethodBase patchedMethod,
+        string suffix
+    )
     {
 #if DEBUG
         Debug.Assert(callerFilePath.Length > 0);
@@ -210,11 +350,16 @@ public static class TranspilerHelpers
         if (dir == null)
             return;
 
-        var name = patchedMethod == null
-            ? callerMemberName.EndsWith("Transpiler")
-                ? callerMemberName.Substring(0, callerMemberName.Length - "Transpiler".Length)
-                : callerMemberName
-            : (patchedMethod.DeclaringType?.Name ?? "NA").Split('`')[0] + "." + patchedMethod.Name.Replace(".ctor", "Constructor").Replace(".cctor", "StaticConstructor");
+        var name =
+            patchedMethod == null
+                ? callerMemberName.EndsWith("Transpiler")
+                    ? callerMemberName.Substring(0, callerMemberName.Length - "Transpiler".Length)
+                    : callerMemberName
+                : (patchedMethod.DeclaringType?.Name ?? "NA").Split('`')[0]
+                    + "."
+                    + patchedMethod
+                        .Name.Replace(".ctor", "Constructor")
+                        .Replace(".cctor", "StaticConstructor");
 
         // For compiler-generated methods (containing non-alphanumeric chars other than _),
         // extract just the local function name, e.g., "<LoadFromFile>g__PerformLoad|0" -> "PerformLoad"
@@ -223,7 +368,9 @@ public static class TranspilerHelpers
             var match = System.Text.RegularExpressions.Regex.Match(name, @"g__(\w+)");
             name = match.Success
                 ? match.Groups[1].Value
-                : new string(name.Where(c => char.IsLetterOrDigit(c) || c == '_' || c == '.').ToArray());
+                : new string(
+                    name.Where(c => char.IsLetterOrDigit(c) || c == '_' || c == '.').ToArray()
+                );
         }
 
         var path = Path.Combine(dir, $"{name}.{suffix}.il");
@@ -254,17 +401,11 @@ public static class TranspilerHelpers
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
 public class CodeInstructionNotFound : Exception
 {
-    public CodeInstructionNotFound()
-    {
-    }
+    public CodeInstructionNotFound() { }
 
     public CodeInstructionNotFound(string message)
-        : base(message)
-    {
-    }
+        : base(message) { }
 
     public CodeInstructionNotFound(string message, Exception inner)
-        : base(message, inner)
-    {
-    }
+        : base(message, inner) { }
 }

@@ -1,1 +1,7 @@
+# Format C# source files only.
+*
+!*/
+!*.cs
 ClientPlugin/ReadyToRun.cs
+bin/
+obj/

@@ -18,7 +18,7 @@ internal sealed class LinuxPlatformFactory : IPlatformFactory
         {
             AppDataPath = appDataPath,
             CrashReporter = new LinuxCrashReporter(),
-            Http = new LinuxHttpClient()
+            Http = new LinuxHttpClient(),
         };
     }
 
@@ -37,13 +37,24 @@ internal sealed class LinuxPlatformFactory : IPlatformFactory
     /// The Linux splash screen is a borderless SDL image window with no text layer, so the
     /// loading font, text offset, and progress notifier the Windows form uses are ignored.
     /// </summary>
-    public void TryCreateSplashScreen(string splashScreen, string splashScreenIcon, string splashScreenFont,
-        Vector2I splashScreenLoadingOffset, ILoadingProgressNotifier progressNotifier)
+    public void TryCreateSplashScreen(
+        string splashScreen,
+        string splashScreenIcon,
+        string splashScreenFont,
+        Vector2I splashScreenLoadingOffset,
+        ILoadingProgressNotifier progressNotifier
+    )
     {
         if (!File.Exists(splashScreen))
-            splashScreen = Path.Combine(Environment.CurrentDirectory, Path.GetFileName(splashScreen));
+            splashScreen = Path.Combine(
+                Environment.CurrentDirectory,
+                Path.GetFileName(splashScreen)
+            );
         if (!File.Exists(splashScreenIcon))
-            splashScreenIcon = Path.Combine(Environment.CurrentDirectory, Path.GetFileName(splashScreenIcon));
+            splashScreenIcon = Path.Combine(
+                Environment.CurrentDirectory,
+                Path.GetFileName(splashScreenIcon)
+            );
         SdlPlatformWindow.SetWindowIcon(splashScreenIcon);
         LinuxSplashScreen.Show(splashScreen, splashScreenIcon);
     }
@@ -52,20 +63,14 @@ internal sealed class LinuxPlatformFactory : IPlatformFactory
     {
         public static readonly LinuxNativeCrashReporter Instance = new();
 
-        public void TrackNativeCrashes(string appName, ref string[] args)
-        {
-        }
+        public void TrackNativeCrashes(string appName, ref string[] args) { }
     }
 
     private sealed class LinuxCrashReporter : ICrashReporter
     {
-        public void WriteMiniDump(string path, MiniDump.Options flags, nint exceptionPointers)
-        {
-        }
+        public void WriteMiniDump(string path, MiniDump.Options flags, nint exceptionPointers) { }
 
-        public void SetNativeExceptionHandler(Action<nint> handler)
-        {
-        }
+        public void SetNativeExceptionHandler(Action<nint> handler) { }
 
         public bool CheckDevelopmentParentProcess() => false;
 
@@ -75,7 +80,8 @@ internal sealed class LinuxPlatformFactory : IPlatformFactory
             return MessageBoxResult.Ok;
         }
 
-        public void OkMessageBox(string text, string caption) => MessageBox(text, caption, MessageBoxOptions.OkOnly);
+        public void OkMessageBox(string text, string caption) =>
+            MessageBox(text, caption, MessageBoxOptions.OkOnly);
 
         public bool IsVirtualProcess(out string virtualizerName)
         {

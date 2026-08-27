@@ -22,7 +22,9 @@ internal static class ManagedAssemblyResolver
 
     private static Assembly? Resolve(object? sender, ResolveEventArgs args)
     {
-        string? directory = Path.GetDirectoryName(typeof(ManagedAssemblyResolver).Assembly.Location);
+        string? directory = Path.GetDirectoryName(
+            typeof(ManagedAssemblyResolver).Assembly.Location
+        );
         if (directory is not { Length: > 0 })
             return null;
 

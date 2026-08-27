@@ -73,12 +73,17 @@ public sealed unsafe class SdlPlatformWindow : IPlatformWindow
     {
         _renderTargetWidth = width;
         _renderTargetHeight = height;
-        _iconPath = Interlocked.Exchange(ref _pendingIconPath, null)
+        _iconPath =
+            Interlocked.Exchange(ref _pendingIconPath, null)
             ?? Path.Combine(Environment.CurrentDirectory, "Game2.ico");
         SdlThread.Invoke(() =>
         {
-            _window = SDL_CreateWindow(title, width, height,
-                WindowHidden | WindowResizable | WindowHighPixelDensity | WindowVulkan);
+            _window = SDL_CreateWindow(
+                title,
+                width,
+                height,
+                WindowHidden | WindowResizable | WindowHighPixelDensity | WindowVulkan
+            );
             if (_window == 0)
                 throw new InvalidOperationException($"SDL window creation failed: {GetError()}");
             _windowId = SDL_GetWindowID(_window);
@@ -91,8 +96,14 @@ public sealed unsafe class SdlPlatformWindow : IPlatformWindow
     }
 
     public nint WindowHandle => _window;
-    public bool DrawEnabled => ((ulong)Interlocked.Read(ref _windowFlags) & (WindowMinimized | WindowOccluded | (_showAllowed ? WindowHidden : 0))) == 0;
-    public bool IsActive => ((ulong)Interlocked.Read(ref _windowFlags) & (WindowInputFocus | WindowMinimized)) == WindowInputFocus;
+    public bool DrawEnabled =>
+        (
+            (ulong)Interlocked.Read(ref _windowFlags)
+            & (WindowMinimized | WindowOccluded | (_showAllowed ? WindowHidden : 0))
+        ) == 0;
+    public bool IsActive =>
+        ((ulong)Interlocked.Read(ref _windowFlags) & (WindowInputFocus | WindowMinimized))
+        == WindowInputFocus;
     public Vector2I ClientSize
     {
         get
@@ -199,8 +210,14 @@ public sealed unsafe class SdlPlatformWindow : IPlatformWindow
 
     public void Hide() => SdlThread.Invoke(() => SDL_HideWindow(_window));
 
-    public void OnModeChanged(bool fullscreenMode, int width, int height, bool topMost,
-        bool isOutputAttachedToAdapter, in BoundingBox2I desktopBounds)
+    public void OnModeChanged(
+        bool fullscreenMode,
+        int width,
+        int height,
+        bool topMost,
+        bool isOutputAttachedToAdapter,
+        in BoundingBox2I desktopBounds
+    )
     {
         lock (_snapshotLock)
         {
@@ -217,17 +234,23 @@ public sealed unsafe class SdlPlatformWindow : IPlatformWindow
             // slower window managers (Cinnamon's Muffin) finish the fullscreen exit after SDL's
             // deadline. The explicit drawable measurement below corrects the size either way.
             if (wasFullscreen && !fullscreenMode && !SDL_SyncWindow(_window))
-                Console.WriteLine("[LinuxCompat] SDL fullscreen exit synchronization timed out; continuing with an explicit resize.");
-            bool drawableMatches = SDL_GetWindowSizeInPixels(_window, out int clientWidth, out int clientHeight)
-                && Math.Abs(clientWidth - width) <= 1 && Math.Abs(clientHeight - height) <= 1;
+                Console.WriteLine(
+                    "[LinuxCompat] SDL fullscreen exit synchronization timed out; continuing with an explicit resize."
+                );
+            bool drawableMatches =
+                SDL_GetWindowSizeInPixels(_window, out int clientWidth, out int clientHeight)
+                && Math.Abs(clientWidth - width) <= 1
+                && Math.Abs(clientHeight - height) <= 1;
             if (!fullscreenMode)
             {
                 Vector2I? windowSize = drawableMatches ? null : ResizeWindowForRenderTarget();
                 SDL_SetWindowBordered(_window, true);
                 if (!SdlThread.IsWayland && windowSize.HasValue)
-                    SDL_SetWindowPosition(_window,
+                    SDL_SetWindowPosition(
+                        _window,
                         bounds.Min.X + (bounds.Width - windowSize.Value.X) / 2,
-                        bounds.Min.Y + (bounds.Height - windowSize.Value.Y) / 2);
+                        bounds.Min.Y + (bounds.Height - windowSize.Value.Y) / 2
+                    );
             }
             SDL_SyncWindow(_window);
             RefreshSnapshot();
@@ -246,22 +269,45 @@ public sealed unsafe class SdlPlatformWindow : IPlatformWindow
     public void Present(nint swapChain, int syncInterval, int flags)
     {
         void** vtable = *(void***)swapChain;
-        _ = ((delegate* unmanaged<nint, uint, uint, int>)vtable[8])(swapChain, (uint)syncInterval, (uint)flags);
+        _ = ((delegate* unmanaged<nint, uint, uint, int>)vtable[8])(
+            swapChain,
+            (uint)syncInterval,
+            (uint)flags
+        );
     }
 
-    public int ResizeBuffers(nint swapChain, uint bufferCount, uint width, uint height, int format, uint flags)
+    public int ResizeBuffers(
+        nint swapChain,
+        uint bufferCount,
+        uint width,
+        uint height,
+        int format,
+        uint flags
+    )
     {
         void** vtable = *(void***)swapChain;
         return ((delegate* unmanaged<nint, uint, uint, uint, int, uint, int>)vtable[13])(
-            swapChain, bufferCount, width, height, format, flags);
+            swapChain,
+            bufferCount,
+            width,
+            height,
+            format,
+            flags
+        );
     }
 
     public void SetFullscreenToggleListener(Action listener) => _fullscreenToggle = listener;
+
     public void ToggleFullscreen() => _fullscreenToggle?.Invoke();
 
     internal void SetShowAllowed(bool allowed) => _showAllowed = allowed;
-    internal static bool IsVisibilityDeferred => Volatile.Read(ref _renderWindow) is { _showAllowed: false };
-    internal static void SetWindowIcon(string path) => Interlocked.Exchange(ref _pendingIconPath, path);
+
+    internal static bool IsVisibilityDeferred =>
+        Volatile.Read(ref _renderWindow) is { _showAllowed: false };
+
+    internal static void SetWindowIcon(string path) =>
+        Interlocked.Exchange(ref _pendingIconPath, path);
+
     internal bool TryConsumeDrawableResize(out Vector2I size)
     {
         lock (_snapshotLock)
@@ -290,14 +336,22 @@ public sealed unsafe class SdlPlatformWindow : IPlatformWindow
             if (((ulong)SDL_GetWindowFlags(window._window) & WindowHidden) == 0)
                 return;
             if (!SDL_ShowWindow(window._window) || !SDL_SyncWindow(window._window))
-                throw new InvalidOperationException($"SDL Wayland window mapping failed: {GetError()}");
+                throw new InvalidOperationException(
+                    $"SDL Wayland window mapping failed: {GetError()}"
+                );
             window.ResizeWindowForRenderTarget();
             if (!SDL_SyncWindow(window._window))
-                throw new InvalidOperationException($"SDL Wayland window resize failed: {GetError()}");
+                throw new InvalidOperationException(
+                    $"SDL Wayland window resize failed: {GetError()}"
+                );
             if (!SDL_HideWindow(window._window) || !SDL_SyncWindow(window._window))
-                throw new InvalidOperationException($"SDL Wayland window hide failed: {GetError()}");
+                throw new InvalidOperationException(
+                    $"SDL Wayland window hide failed: {GetError()}"
+                );
             window.RefreshSnapshot();
-            Console.WriteLine($"[LinuxCompat] SDL3 game window prepared: driver=wayland, logical={window._windowWidth}x{window._windowHeight}, pixels={window._clientWidth}x{window._clientHeight}");
+            Console.WriteLine(
+                $"[LinuxCompat] SDL3 game window prepared: driver=wayland, logical={window._windowWidth}x{window._windowHeight}, pixels={window._clientWidth}x{window._clientHeight}"
+            );
         });
     }
 
@@ -349,37 +403,68 @@ public sealed unsafe class SdlPlatformWindow : IPlatformWindow
                     _resizePending = _clientWidth > 0 && _clientHeight > 0;
             }
         }
-        else if ((e.Type is EventWindowDisplayChanged or EventWindowDisplayScaleChanged) && !IsFullscreen)
+        else if (
+            (e.Type is EventWindowDisplayChanged or EventWindowDisplayScaleChanged) && !IsFullscreen
+        )
         {
             ResizeWindowForRenderTarget();
             lock (_snapshotLock)
                 _resizePending = false;
         }
         else if (e.Type is EventKeyDown or EventKeyUp)
-            SdlInputEvents.Pending.Enqueue(new SdlInputEvent(SdlInputEventKind.Key,
-                e.Keyboard.Scancode, e.Type == EventKeyDown));
+            SdlInputEvents.Pending.Enqueue(
+                new SdlInputEvent(
+                    SdlInputEventKind.Key,
+                    e.Keyboard.Scancode,
+                    e.Type == EventKeyDown
+                )
+            );
         else if (e.Type == EventTextInput)
-            SdlInputEvents.Pending.Enqueue(new SdlInputEvent(SdlInputEventKind.TextInput,
-                Text: Marshal.PtrToStringUTF8(e.TextInput.Text) ?? string.Empty));
+            SdlInputEvents.Pending.Enqueue(
+                new SdlInputEvent(
+                    SdlInputEventKind.TextInput,
+                    Text: Marshal.PtrToStringUTF8(e.TextInput.Text) ?? string.Empty
+                )
+            );
         else if (e.Type == EventTextEditing)
-            SdlInputEvents.Pending.Enqueue(new SdlInputEvent(SdlInputEventKind.TextEditing,
-                Code: e.TextEditing.Start,
-                Text: Marshal.PtrToStringUTF8(e.TextEditing.Text) ?? string.Empty));
+            SdlInputEvents.Pending.Enqueue(
+                new SdlInputEvent(
+                    SdlInputEventKind.TextEditing,
+                    Code: e.TextEditing.Start,
+                    Text: Marshal.PtrToStringUTF8(e.TextEditing.Text) ?? string.Empty
+                )
+            );
         else if (e.Type == EventMouseMotion)
         {
             Vector2 position = ScaleMousePosition(e.Motion.X, e.Motion.Y);
-            SdlInputEvents.Pending.Enqueue(new SdlInputEvent(SdlInputEventKind.MouseMotion,
-                X: position.X, Y: position.Y,
-                DeltaX: e.Motion.Xrel, DeltaY: e.Motion.Yrel));
+            SdlInputEvents.Pending.Enqueue(
+                new SdlInputEvent(
+                    SdlInputEventKind.MouseMotion,
+                    X: position.X,
+                    Y: position.Y,
+                    DeltaX: e.Motion.Xrel,
+                    DeltaY: e.Motion.Yrel
+                )
+            );
         }
         else if (e.Type is EventMouseButtonDown or EventMouseButtonUp)
-            SdlInputEvents.Pending.Enqueue(new SdlInputEvent(SdlInputEventKind.MouseButton,
-                e.Button.Button, e.Type == EventMouseButtonDown));
+            SdlInputEvents.Pending.Enqueue(
+                new SdlInputEvent(
+                    SdlInputEventKind.MouseButton,
+                    e.Button.Button,
+                    e.Type == EventMouseButtonDown
+                )
+            );
         else if (e.Type == EventMouseWheel)
         {
             float direction = e.Wheel.Direction == 1 ? -1 : 1;
-            SdlInputEvents.Pending.Enqueue(new SdlInputEvent(SdlInputEventKind.MouseWheel,
-                X: e.Wheel.X * direction, Y: e.Wheel.Y * direction));
+            SdlInputEvents.Pending.Enqueue(
+                new SdlInputEvent(
+                    SdlInputEventKind.MouseWheel,
+                    X: e.Wheel.X * direction,
+                    Y: e.Wheel.Y * direction
+                )
+            );
         }
     }
 
@@ -408,7 +493,11 @@ public sealed unsafe class SdlPlatformWindow : IPlatformWindow
     private void RefreshSnapshot()
     {
         Interlocked.Exchange(ref _windowFlags, (long)SDL_GetWindowFlags(_window));
-        bool hasClientSize = SDL_GetWindowSizeInPixels(_window, out int clientWidth, out int clientHeight);
+        bool hasClientSize = SDL_GetWindowSizeInPixels(
+            _window,
+            out int clientWidth,
+            out int clientHeight
+        );
         bool hasWindowSize = SDL_GetWindowSize(_window, out int windowWidth, out int windowHeight);
         SDL_GetMouseState(out float x, out float y);
         lock (_snapshotLock)
@@ -435,13 +524,23 @@ public sealed unsafe class SdlPlatformWindow : IPlatformWindow
             (byte[] pixels, int width, int height) = LoadIcon(path);
             fixed (byte* data = pixels)
             {
-                nint surface = SDL_CreateSurfaceFrom(width, height, PixelFormatBgra32, data, width * 4);
+                nint surface = SDL_CreateSurfaceFrom(
+                    width,
+                    height,
+                    PixelFormatBgra32,
+                    data,
+                    width * 4
+                );
                 if (surface == 0)
-                    throw new InvalidOperationException($"SDL icon surface creation failed: {GetError()}");
+                    throw new InvalidOperationException(
+                        $"SDL icon surface creation failed: {GetError()}"
+                    );
                 try
                 {
                     if (!SDL_SetWindowIcon(window, surface))
-                        throw new InvalidOperationException($"SDL window icon failed: {GetError()}");
+                        throw new InvalidOperationException(
+                            $"SDL window icon failed: {GetError()}"
+                        );
                 }
                 finally
                 {
@@ -452,7 +551,9 @@ public sealed unsafe class SdlPlatformWindow : IPlatformWindow
         }
         catch (Exception exception)
         {
-            Console.Error.WriteLine($"[LinuxCompat] Could not set the game icon: {exception.Message}");
+            Console.Error.WriteLine(
+                $"[LinuxCompat] Could not set the game icon: {exception.Message}"
+            );
             return false;
         }
     }
@@ -493,7 +594,13 @@ public sealed unsafe class SdlPlatformWindow : IPlatformWindow
         _ = reader.ReadUInt16();
         int bits = reader.ReadUInt16();
         uint compression = reader.ReadUInt32();
-        if (headerSize < 40 || bitmapWidth != bestWidth || bitmapHeight != bestHeight || bits != 32 || compression != 0)
+        if (
+            headerSize < 40
+            || bitmapWidth != bestWidth
+            || bitmapHeight != bestHeight
+            || bits != 32
+            || compression != 0
+        )
             throw new InvalidDataException("Game icon bitmap is unsupported.");
 
         stream.Position = bestOffset + headerSize;
@@ -532,9 +639,17 @@ public sealed unsafe class SdlPlatformWindow : IPlatformWindow
         {
             fixed (byte* pixels = value.Pixels)
             {
-                nint surface = SDL_CreateSurfaceFrom(value.Width, value.Height, PixelFormatRgba32,
-                    pixels, value.Width * 4);
-                cursor = surface == 0 ? 0 : SDL_CreateColorCursor(surface, value.HotspotX, value.HotspotY);
+                nint surface = SDL_CreateSurfaceFrom(
+                    value.Width,
+                    value.Height,
+                    PixelFormatRgba32,
+                    pixels,
+                    value.Width * 4
+                );
+                cursor =
+                    surface == 0
+                        ? 0
+                        : SDL_CreateColorCursor(surface, value.HotspotX, value.HotspotY);
                 SDL_DestroySurface(surface);
             }
             owned = true;
@@ -561,25 +676,28 @@ public sealed unsafe class SdlPlatformWindow : IPlatformWindow
         _cursor = owned ? cursor : 0;
     }
 
-    private static int ToSdlSystemCursor(StandardPlatformCursor cursor) => cursor switch
-    {
-        StandardPlatformCursor.Ibeam => 1,
-        StandardPlatformCursor.Wait => 2,
-        StandardPlatformCursor.Cross => 3,
-        StandardPlatformCursor.AppStarting => 4,
-        StandardPlatformCursor.TopLeftCorner or StandardPlatformCursor.BottomRightCorner => 5,
-        StandardPlatformCursor.TopRightCorner or StandardPlatformCursor.BottomLeftCorner => 6,
-        StandardPlatformCursor.SizeWestEast => 7,
-        StandardPlatformCursor.SizeNorthSouth => 8,
-        StandardPlatformCursor.SizeAll or StandardPlatformCursor.DragMove => 9,
-        StandardPlatformCursor.No => 10,
-        StandardPlatformCursor.Hand or StandardPlatformCursor.DragCopy or StandardPlatformCursor.DragLink => 11,
-        StandardPlatformCursor.TopSide => 13,
-        StandardPlatformCursor.RightSide => 15,
-        StandardPlatformCursor.BottomSide => 17,
-        StandardPlatformCursor.LeftSide => 19,
-        _ => 0
-    };
+    private static int ToSdlSystemCursor(StandardPlatformCursor cursor) =>
+        cursor switch
+        {
+            StandardPlatformCursor.Ibeam => 1,
+            StandardPlatformCursor.Wait => 2,
+            StandardPlatformCursor.Cross => 3,
+            StandardPlatformCursor.AppStarting => 4,
+            StandardPlatformCursor.TopLeftCorner or StandardPlatformCursor.BottomRightCorner => 5,
+            StandardPlatformCursor.TopRightCorner or StandardPlatformCursor.BottomLeftCorner => 6,
+            StandardPlatformCursor.SizeWestEast => 7,
+            StandardPlatformCursor.SizeNorthSouth => 8,
+            StandardPlatformCursor.SizeAll or StandardPlatformCursor.DragMove => 9,
+            StandardPlatformCursor.No => 10,
+            StandardPlatformCursor.Hand
+            or StandardPlatformCursor.DragCopy
+            or StandardPlatformCursor.DragLink => 11,
+            StandardPlatformCursor.TopSide => 13,
+            StandardPlatformCursor.RightSide => 15,
+            StandardPlatformCursor.BottomSide => 17,
+            StandardPlatformCursor.LeftSide => 19,
+            _ => 0,
+        };
 
     private Vector2 ScaleMousePosition(float x, float y)
     {
@@ -593,7 +711,10 @@ public sealed unsafe class SdlPlatformWindow : IPlatformWindow
         {
             if (_windowWidth == 0 || _windowHeight == 0)
                 return Vector2.One;
-            return new Vector2((float)_renderTargetWidth / _windowWidth, (float)_renderTargetHeight / _windowHeight);
+            return new Vector2(
+                (float)_renderTargetWidth / _windowWidth,
+                (float)_renderTargetHeight / _windowHeight
+            );
         }
     }
 
@@ -606,7 +727,8 @@ public sealed unsafe class SdlPlatformWindow : IPlatformWindow
         lock (_snapshotLock)
             size = new Vector2I(
                 Math.Max(1, (int)MathF.Round(_renderTargetWidth / density)),
-                Math.Max(1, (int)MathF.Round(_renderTargetHeight / density)));
+                Math.Max(1, (int)MathF.Round(_renderTargetHeight / density))
+            );
         if (!SDL_SetWindowSize(_window, size.X, size.Y))
             throw new InvalidOperationException($"SDL window resize failed: {GetError()}");
         return size;
@@ -666,18 +788,22 @@ public sealed unsafe class SdlPlatformWindow : IPlatformWindow
         window.ApplyTextInputActive(false);
     }
 
-    private void ApplyTextInputActive(bool active) => SdlThread.Invoke(() =>
-    {
-        bool success = active ? SDL_StartTextInput(_window) : SDL_StopTextInput(_window);
-        if (!success)
-            throw new InvalidOperationException($"SDL text input state change failed: {GetError()}");
-    });
+    private void ApplyTextInputActive(bool active) =>
+        SdlThread.Invoke(() =>
+        {
+            bool success = active ? SDL_StartTextInput(_window) : SDL_StopTextInput(_window);
+            if (!success)
+                throw new InvalidOperationException(
+                    $"SDL text input state change failed: {GetError()}"
+                );
+        });
 
-    private void ApplyClearTextComposition() => SdlThread.Invoke(() =>
-    {
-        if (!SDL_ClearComposition(_window))
-            throw new InvalidOperationException($"SDL composition reset failed: {GetError()}");
-    });
+    private void ApplyClearTextComposition() =>
+        SdlThread.Invoke(() =>
+        {
+            if (!SDL_ClearComposition(_window))
+                throw new InvalidOperationException($"SDL composition reset failed: {GetError()}");
+        });
 
     private void ApplyTextInputArea((double X, double Y, double Width, double Height) area)
     {
@@ -685,19 +811,22 @@ public sealed unsafe class SdlPlatformWindow : IPlatformWindow
         lock (_snapshotLock)
         {
             double scaleX = _renderTargetWidth == 0 ? 1 : (double)_windowWidth / _renderTargetWidth;
-            double scaleY = _renderTargetHeight == 0 ? 1 : (double)_windowHeight / _renderTargetHeight;
+            double scaleY =
+                _renderTargetHeight == 0 ? 1 : (double)_windowHeight / _renderTargetHeight;
             rect = new SdlRect
             {
                 X = (int)Math.Round(area.X * scaleX),
                 Y = (int)Math.Round(area.Y * scaleY),
                 Width = Math.Max(1, (int)Math.Round(area.Width * scaleX)),
-                Height = Math.Max(1, (int)Math.Round(area.Height * scaleY))
+                Height = Math.Max(1, (int)Math.Round(area.Height * scaleY)),
             };
         }
         SdlThread.Invoke(() =>
         {
             if (!SDL_SetTextInputArea(_window, in rect, 0))
-                throw new InvalidOperationException($"SDL text input area update failed: {GetError()}");
+                throw new InvalidOperationException(
+                    $"SDL text input area update failed: {GetError()}"
+                );
         });
     }
 
@@ -724,7 +853,11 @@ public sealed unsafe class SdlPlatformWindow : IPlatformWindow
 
     [DllImport(Sdl, EntryPoint = "SDL_GetWindowSizeInPixels")]
     [return: MarshalAs(UnmanagedType.I1)]
-    private static extern bool SDL_GetWindowSizeInPixels(nint window, out int width, out int height);
+    private static extern bool SDL_GetWindowSizeInPixels(
+        nint window,
+        out int width,
+        out int height
+    );
 
     [DllImport(Sdl, EntryPoint = "SDL_GetWindowSize")]
     [return: MarshalAs(UnmanagedType.I1)]
@@ -758,15 +891,24 @@ public sealed unsafe class SdlPlatformWindow : IPlatformWindow
 
     [DllImport(Sdl, EntryPoint = "SDL_SetWindowBordered")]
     [return: MarshalAs(UnmanagedType.I1)]
-    private static extern bool SDL_SetWindowBordered(nint window, [MarshalAs(UnmanagedType.I1)] bool bordered);
+    private static extern bool SDL_SetWindowBordered(
+        nint window,
+        [MarshalAs(UnmanagedType.I1)] bool bordered
+    );
 
     [DllImport(Sdl, EntryPoint = "SDL_SetWindowAlwaysOnTop")]
     [return: MarshalAs(UnmanagedType.I1)]
-    private static extern bool SDL_SetWindowAlwaysOnTop(nint window, [MarshalAs(UnmanagedType.I1)] bool onTop);
+    private static extern bool SDL_SetWindowAlwaysOnTop(
+        nint window,
+        [MarshalAs(UnmanagedType.I1)] bool onTop
+    );
 
     [DllImport(Sdl, EntryPoint = "SDL_SetWindowFullscreen")]
     [return: MarshalAs(UnmanagedType.I1)]
-    private static extern bool SDL_SetWindowFullscreen(nint window, [MarshalAs(UnmanagedType.I1)] bool enabled);
+    private static extern bool SDL_SetWindowFullscreen(
+        nint window,
+        [MarshalAs(UnmanagedType.I1)] bool enabled
+    );
 
     [DllImport(Sdl, EntryPoint = "SDL_SyncWindow")]
     [return: MarshalAs(UnmanagedType.I1)]
@@ -774,11 +916,17 @@ public sealed unsafe class SdlPlatformWindow : IPlatformWindow
 
     [DllImport(Sdl, EntryPoint = "SDL_SetWindowRelativeMouseMode")]
     [return: MarshalAs(UnmanagedType.I1)]
-    private static extern bool SDL_SetWindowRelativeMouseMode(nint window, [MarshalAs(UnmanagedType.I1)] bool enabled);
+    private static extern bool SDL_SetWindowRelativeMouseMode(
+        nint window,
+        [MarshalAs(UnmanagedType.I1)] bool enabled
+    );
 
     [DllImport(Sdl, EntryPoint = "SDL_SetWindowMouseGrab")]
     [return: MarshalAs(UnmanagedType.I1)]
-    private static extern bool SDL_SetWindowMouseGrab(nint window, [MarshalAs(UnmanagedType.I1)] bool grabbed);
+    private static extern bool SDL_SetWindowMouseGrab(
+        nint window,
+        [MarshalAs(UnmanagedType.I1)] bool grabbed
+    );
 
     [DllImport(Sdl, EntryPoint = "SDL_ShowCursor")]
     [return: MarshalAs(UnmanagedType.I1)]
@@ -789,7 +937,13 @@ public sealed unsafe class SdlPlatformWindow : IPlatformWindow
     private static extern bool SDL_HideCursor();
 
     [DllImport(Sdl, EntryPoint = "SDL_CreateSurfaceFrom")]
-    private static extern nint SDL_CreateSurfaceFrom(int width, int height, uint format, void* pixels, int pitch);
+    private static extern nint SDL_CreateSurfaceFrom(
+        int width,
+        int height,
+        uint format,
+        void* pixels,
+        int pitch
+    );
 
     [DllImport(Sdl, EntryPoint = "SDL_SetWindowIcon")]
     [return: MarshalAs(UnmanagedType.I1)]

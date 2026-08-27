@@ -27,8 +27,8 @@ public class Config : INotifyPropertyChanged
     private float number = 0.1f;
     private string text = "Default Text";
     private ExampleEnum dropdown = ExampleEnum.FirstAlpha;
-    private uint color = 0xFF00FFFFu;           // ARGB packed, cyan
-    private uint colorWithAlpha = 0x80CC9933u;  // ARGB packed, 50% alpha orange-ish
+    private uint color = 0xFF00FFFFu; // ARGB packed, cyan
+    private uint colorWithAlpha = 0x80CC9933u; // ARGB packed, 50% alpha orange-ish
     private Binding keybind = new Binding();
 
     #endregion
@@ -39,7 +39,6 @@ public class Config : INotifyPropertyChanged
     public readonly string Title = "Config Demo";
 
     [Separator("Some settings")]
-
     [Checkbox(description: "Enable or disable the plugin's features")]
     public bool Enabled
     {
@@ -54,7 +53,13 @@ public class Config : INotifyPropertyChanged
         set => SetField(ref toggle, value);
     }
 
-    [Slider(-1f, 10f, 1f, SliderAttribute.SliderType.Integer, description: "Integer Slider Tooltip")]
+    [Slider(
+        -1f,
+        10f,
+        1f,
+        SliderAttribute.SliderType.Integer,
+        description: "Integer Slider Tooltip"
+    )]
     public int Integer
     {
         get => integer;
@@ -83,7 +88,6 @@ public class Config : INotifyPropertyChanged
     }
 
     [Separator("More settings")]
-
     [XmlIgnore]
     [Color(description: "RGB color")]
     public Color Color
@@ -108,10 +112,7 @@ public class Config : INotifyPropertyChanged
     }
 
     [Button(description: "Button Tooltip")]
-    public void Button()
-    {
-        // TODO: Put your custom button action here.
-    }
+    public void Button() { }
 
     #endregion
 
@@ -145,7 +146,8 @@ public class Config : INotifyPropertyChanged
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
     {
-        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+        if (EqualityComparer<T>.Default.Equals(field, value))
+            return false;
         field = value;
         OnPropertyChanged(propertyName);
         return true;

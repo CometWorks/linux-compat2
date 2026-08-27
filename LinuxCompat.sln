@@ -2,6 +2,16 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientPlugin", "ClientPlugin\ClientPlugin.csproj", "{9744C158-1AE9-498A-871A-88D334574A5A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InstallSmoke", "Checks\InstallSmoke\InstallSmoke.csproj", "{E33B1920-2877-4D60-AB94-FCC58795D53F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2A1317B0-A8E4-4F73-B32C-B86BD216102F}"
+	ProjectSection(SolutionItems) = preProject
+		.csharpierignore = .csharpierignore
+		.gitignore = .gitignore
+		Directory.Build.props = Directory.Build.props
+		README.md = README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +22,9 @@ Global
 		{9744C158-1AE9-498A-871A-88D334574A5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9744C158-1AE9-498A-871A-88D334574A5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9744C158-1AE9-498A-871A-88D334574A5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E33B1920-2877-4D60-AB94-FCC58795D53F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E33B1920-2877-4D60-AB94-FCC58795D53F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E33B1920-2877-4D60-AB94-FCC58795D53F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E33B1920-2877-4D60-AB94-FCC58795D53F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
