@@ -20,6 +20,7 @@ initializes Steam, downloads news banners, and exits cleanly through "Exit to Li
 - .NET 10 runtime
 - A Vulkan-capable graphics driver
 - The dependency archives listed in `ClientPlugin/ClientPlugin.xml`
+  (paths are relative to the repository root)
 
 ## Development setup
 
