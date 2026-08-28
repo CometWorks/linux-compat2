@@ -543,7 +543,12 @@ internal static class D3D12AbiPatch
         ConstructorInfo wrapConstructor =
             AccessTools.Constructor(
                 typeof(D3DCommittedResourceWrap),
-                [typeof(ID3D12Resource), typeof(string), typeof(AllocationRecord)]
+                [
+                    typeof(ID3D12Resource),
+                    typeof(string),
+                    typeof(AllocationRecord),
+                    typeof(HeapFlags),
+                ]
             )
             ?? throw new MissingMethodException(typeof(D3DCommittedResourceWrap).FullName, ".ctor");
         Add(wrapConstructor, resourceDescription, resourceAdapter, 1);
