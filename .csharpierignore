@@ -2,6 +2,5 @@
 *
 !*/
 !*.cs
-ClientPlugin/ReadyToRun.cs
 bin/
 obj/
