@@ -19,11 +19,6 @@
            Extract="true"
            Placement="Bin" />
 
-    <Asset Name="SteamDependencies"
-           Path="../linux-dependencies/dist/steam-dependencies.tar.gz"
-           Extract="true"
-           Placement="Bin" />
-
     <Asset Name="NativeWrappers"
            Path="../linux-native-wrappers/dist/se2-native-wrappers.tar.gz"
            Extract="true"
