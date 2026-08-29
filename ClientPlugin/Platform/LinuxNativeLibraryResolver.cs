@@ -89,7 +89,16 @@ internal static class LinuxNativeLibraryResolver
                 libraryName
             );
 
-        string? path = libraryName.ToLowerInvariant() switch
+        string? path = MapNativeLibrary(libraryName);
+        return path == null ? 0 : Load(path);
+    }
+
+    /// <summary>
+    /// Maps a P/Invoke library name onto the path of its Linux counterpart, or
+    /// null when the name is not one this plugin substitutes.
+    /// </summary>
+    private static string? MapNativeLibrary(string libraryName) =>
+        libraryName.ToLowerInvariant() switch
         {
             "dxgi" or "dxgi.dll" => GetPath("SE2_DXGI_LIBRARY", NativePath("libdxvk_dxgi.so")),
             "d3d12" or "d3d12.dll" => GetPath(
@@ -114,9 +123,30 @@ internal static class LinuxNativeLibraryResolver
             ),
             "fmod" => GetPath("SE2_FMOD_LIBRARY", NativePath("libfmod.so.14")),
             "fmodstudio" => GetPath("SE2_FMOD_STUDIO_LIBRARY", NativePath("libfmodstudio.so.14")),
+            "amd_fidelityfx_loader_dx12" or "amd_fidelityfx_loader_dx12.dll" => GetPath(
+                "SE2_FIDELITYFX_LIBRARY",
+                NativePath("libamd_fidelityfx_loader_dx12.so")
+            ),
             _ => null,
         };
-        return path == null ? 0 : Load(path);
+
+    /// <summary>
+    /// Reports whether a substituted library is present and loadable, without
+    /// throwing. Used for libraries the game only needs for an optional feature,
+    /// so a missing or broken one can be handled instead of killing the caller.
+    /// The loaded handle is kept, so a later resolve reuses it.
+    /// </summary>
+    internal static bool CanLoad(string libraryName)
+    {
+        if (MapNativeLibrary(libraryName) is not { } path)
+            return false;
+        if (Handles.ContainsKey(path))
+            return true;
+        if (!File.Exists(path) || !NativeLibrary.TryLoad(path, out nint handle))
+            return false;
+
+        Handles[path] = handle;
+        return true;
     }
 
     private static unsafe nint LoadWrapper(string path, string originalName)

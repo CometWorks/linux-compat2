@@ -6,12 +6,13 @@ Pulsar's Cecil preloader apply the changes at run time. The plugin does not ship
 assemblies.
 
 The native Windows libraries are supplied by Linux wrappers and translation layers, including
-DXVK, vkd3d-proton, SDL3, and FMOD.
+DXVK, vkd3d-proton, SDL3, FMOD, and AMD FidelityFX (the FSR 3.1 upscaler, built for Linux).
 
 ## Status
 
 The game starts through Pulsar Modern on Linux, reaches the main menu, renders through Vulkan,
-initializes Steam, downloads news banners, and exits cleanly through "Exit to Linux".
+upscales through FSR 3.1 when the graphics Quality setting selects it, initializes Steam,
+downloads news banners, and exits cleanly through "Exit to Linux".
 
 ## Prerequisites
 
