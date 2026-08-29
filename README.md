@@ -155,4 +155,4 @@ Open an issue with the game and Pulsar logs, or start a support thread on the
 
 ## Legal
 
-Space Engineers is a trademark of Keen Software House s.r.o.
+Space Engineers 2 is a trademark of Keen Software House s.r.o.

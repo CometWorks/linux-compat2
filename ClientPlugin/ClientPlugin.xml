@@ -5,7 +5,7 @@
     <RepoId>CometWorks/linux-compat2</RepoId>
 
     <FriendlyName>LinuxCompat</FriendlyName>
-    <Author>Viktor</Author>
+    <Author>Space, Viktor</Author>
 
     <Tooltip>Linux support for Space Engineers 2</Tooltip>
     <Description>Patches Space Engineers 2 to run natively on Linux. The plugin loads automatically when needed.</Description>
