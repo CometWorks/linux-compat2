@@ -39,14 +39,13 @@ public Color Color
     set => SetField(ref color, value.ToUInt32() | 0xFF000000u);
 }
 
-// Serialized to XML instead of the Color property.
 public uint ColorPacked { get => color; set => color = value; }
 ```
 
 ## Keybind persistence
 
-`Binding` stores a Windows virtual-key code plus Ctrl/Alt/Shift flags — the same
-representation SE2's `KeyboardInputs` uses — so it round-trips cleanly through
+`Binding` stores a Windows virtual-key code plus Ctrl/Alt/Shift flags. This is the same
+representation SE2's `KeyboardInputs` uses, so it round-trips cleanly through
 `InputControlComposer.KeyboardDefault` and XML-serializes as plain fields.
 `Binding.ToInputControl(action)` and `Binding.FromInputControl(control)` bridge
 to the game's `InputControl` type when you need to register the binding with
@@ -54,7 +53,7 @@ SE2's input system.
 
 ## Reacting to the configured keybind
 
-The `[Keybind]` attribute only captures and persists the binding — it does not
+The `[Keybind]` attribute only captures and persists the binding. It does not
 wire the key to any action. To actually react when the user presses it, poll
 the game's keyboard device from a per-frame Harmony patch.
 
@@ -78,10 +77,6 @@ Patch a per-frame method (e.g. `Session.Update`) with a postfix, filter to the
 client session (only it has `SessionInGameUISessionComponent`), and compare the
 current pressed state to the previous one to edge-trigger once per press rather
 than every frame the key is held.
-
-See [Patches/KeybindTestPatch.cs](../Patches/KeybindTestPatch.cs) for a working
-end-to-end example that also shows a toast via
-`SessionInGameUISessionComponent.DisplayNotification(...)`.
 
 Why poll rather than register an `InputActionDefinition` with an
 `InputContext`? That first-class path exists but is content-driven: the
@@ -108,5 +103,4 @@ To support a property type that is not covered by the built-in attributes,
 add a new file under [Elements/](Elements/) that implements `IElement` and
 derives from `Attribute`. `BuildRow` should return a `Control` built via
 `RowBuilder.NewRow(label, tooltip, ...)`.
-[`SettingsGenerator`](SettingsGenerator.cs) will pick the new attribute up
-automatically — no registration needed.
+[`SettingsGenerator`](SettingsGenerator.cs) picks up the new attribute without registration.

@@ -7,7 +7,9 @@ namespace LinuxCompat.Platform;
 
 internal static class LinuxNativeLibraryResolver
 {
-    private static readonly Dictionary<string, nint> Handles = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, nint> Handles = new(
+        StringComparer.OrdinalIgnoreCase
+    );
     private static readonly Lazy<string?> WrapperCacheDirectory = new(CreateWrapperCacheDirectory);
     private static readonly Lazy<string[]> NativeDirectories = new(FindNativeDirectories);
 
@@ -21,11 +23,13 @@ internal static class LinuxNativeLibraryResolver
             SetEnvironmentVariable("DXVK_FILTER_DEVICE_NAME", "llvmpipe");
             SetEnvironmentVariable("VKD3D_FILTER_DEVICE_NAME", "llvmpipe");
             SetEnvironmentVariable("VKD3D_FEATURE_LEVEL", "12_0");
-            SetEnvironmentVariable("LP_NUM_THREADS", Math.Min(4, Environment.ProcessorCount).ToString());
+            SetEnvironmentVariable(
+                "LP_NUM_THREADS",
+                Math.Min(4, Environment.ProcessorCount).ToString()
+            );
         }
 
-        string core = GetPath("SE2_D3D12CORE_LIBRARY",
-            NativePath("libvkd3d-proton-d3d12core.so"));
+        string core = GetPath("SE2_D3D12CORE_LIBRARY", NativePath("libvkd3d-proton-d3d12core.so"));
         Load(core);
         PrependDxcResolver();
         AssemblyLoadContext.Default.ResolvingUnmanagedDll += Resolve;
@@ -33,16 +37,21 @@ internal static class LinuxNativeLibraryResolver
 
     private static void PrependDxcResolver()
     {
-        FieldInfo field = typeof(Dxc).GetField("ResolveLibrary", BindingFlags.Static | BindingFlags.NonPublic)
+        // Event subscription appends, but the Linux resolver must run before the game's resolver.
+        FieldInfo field =
+            typeof(Dxc).GetField("ResolveLibrary", BindingFlags.Static | BindingFlags.NonPublic)
             ?? throw new MissingFieldException(typeof(Dxc).FullName, "ResolveLibrary");
         var current = (DllImportResolver?)field.GetValue(null);
         field.SetValue(null, (DllImportResolver)ResolveDxc + current);
     }
 
-    private static nint ResolveDxc(string libraryName, Assembly assembly, DllImportSearchPath? searchPath) =>
+    private static nint ResolveDxc(
+        string libraryName,
+        Assembly assembly,
+        DllImportSearchPath? searchPath
+    ) =>
         libraryName.Equals("dxcompiler.dll", StringComparison.OrdinalIgnoreCase)
-            ? Load(GetPath("SE2_DXCOMPILER_LIBRARY",
-                NativePath("libSE2DxcCompiler.so")))
+            ? Load(GetPath("SE2_DXCOMPILER_LIBRARY", NativePath("libdxcompiler.so")))
             : 0;
 
     /// <summary>
@@ -65,32 +74,47 @@ internal static class LinuxNativeLibraryResolver
         if (libraryName is "libSDL3.so.0" or "libSDL3.so" or "SDL3")
             return Load(GetPath("SE2_SDL3_LIBRARY", NativePath("libSDL3.so.0")));
         if (libraryName.Equals("VRage.Physics.Native.dll", StringComparison.OrdinalIgnoreCase))
-            return LoadWrapper(GetPath("SE2_PHYSICS_LIBRARY",
-                NativePath("libVRage.Physics.Native.so")), libraryName);
+            return LoadWrapper(
+                GetPath("SE2_PHYSICS_LIBRARY", NativePath("libVRage.Physics.Native.so")),
+                libraryName
+            );
         if (libraryName.Equals("VRage.Voxels.Native.dll", StringComparison.OrdinalIgnoreCase))
-            return LoadWrapper(GetPath("SE2_VOXELS_LIBRARY",
-                NativePath("libVRage.Voxels.Native.so")), libraryName);
+            return LoadWrapper(
+                GetPath("SE2_VOXELS_LIBRARY", NativePath("libVRage.Voxels.Native.so")),
+                libraryName
+            );
         if (libraryName.Equals("VRage.Slug.Native.dll", StringComparison.OrdinalIgnoreCase))
-            return LoadWrapper(GetPath("SE2_SLUG_LIBRARY",
-                NativePath("libVRage.Slug.Native.so")), libraryName);
+            return LoadWrapper(
+                GetPath("SE2_SLUG_LIBRARY", NativePath("libVRage.Slug.Native.so")),
+                libraryName
+            );
 
         string? path = libraryName.ToLowerInvariant() switch
         {
-            "dxgi" or "dxgi.dll" => GetPath("SE2_DXGI_LIBRARY",
-                NativePath("libdxvk_dxgi.so")),
-            "d3d12" or "d3d12.dll" => GetPath("SE2_D3D12_LIBRARY",
-                NativePath("libvkd3d-proton-d3d12.so")),
-            "d3d12core" or "d3d12core.dll" => GetPath("SE2_D3D12CORE_LIBRARY",
-                NativePath("libvkd3d-proton-d3d12core.so")),
-            "dxcompiler" or "dxcompiler.dll" => GetPath("SE2_DXCOMPILER_LIBRARY",
-                NativePath("libSE2DxcCompiler.so")),
-            "steam_api" or "steam_api64" => GetPath("SE2_STEAM_API_LIBRARY",
-                NativePath("libsteam_api.so")),
-            "vrage.kytherav2.native.dll" => GetPath("SE2_KYTHERA_LIBRARY",
-                NativePath("libVRage.KytheraV2.Native.so")),
+            "dxgi" or "dxgi.dll" => GetPath("SE2_DXGI_LIBRARY", NativePath("libdxvk_dxgi.so")),
+            "d3d12" or "d3d12.dll" => GetPath(
+                "SE2_D3D12_LIBRARY",
+                NativePath("libvkd3d-proton-d3d12.so")
+            ),
+            "d3d12core" or "d3d12core.dll" => GetPath(
+                "SE2_D3D12CORE_LIBRARY",
+                NativePath("libvkd3d-proton-d3d12core.so")
+            ),
+            "dxcompiler" or "dxcompiler.dll" => GetPath(
+                "SE2_DXCOMPILER_LIBRARY",
+                NativePath("libdxcompiler.so")
+            ),
+            "steam_api" or "steam_api64" => GetPath(
+                "SE2_STEAM_API_LIBRARY",
+                NativePath("libsteam_api.so")
+            ),
+            "vrage.kytherav2.native.dll" => GetPath(
+                "SE2_KYTHERA_LIBRARY",
+                NativePath("libVRage.KytheraV2.Native.so")
+            ),
             "fmod" => GetPath("SE2_FMOD_LIBRARY", NativePath("libfmod.so.14")),
             "fmodstudio" => GetPath("SE2_FMOD_STUDIO_LIBRARY", NativePath("libfmodstudio.so.14")),
-            _ => null
+            _ => null,
         };
         return path == null ? 0 : Load(path);
     }
@@ -103,13 +127,19 @@ internal static class LinuxNativeLibraryResolver
             throw new FileNotFoundException("The original native library was not found.", original);
 
         string? cacheDirectory = WrapperCacheDirectory.Value;
-        string? sidecar = cacheDirectory == null ? null : Path.Combine(cacheDirectory, originalName);
+        string? sidecar =
+            cacheDirectory == null ? null : Path.Combine(cacheDirectory, originalName);
         nint originalUtf8 = Marshal.StringToCoTaskMemUTF8(original);
         nint sidecarUtf8 = Marshal.StringToCoTaskMemUTF8(sidecar);
         try
         {
-            ((delegate* unmanaged[Cdecl]<nint, nint, void>)NativeLibrary.GetExport(handle, "Init"))(originalUtf8, sidecarUtf8);
-            Console.WriteLine($"[LinuxCompat] initialized {originalName}: {original} (sidecar: {sidecar ?? "<none>"})");
+            ((delegate* unmanaged[Cdecl]<nint, nint, void>)NativeLibrary.GetExport(handle, "Init"))(
+                originalUtf8,
+                sidecarUtf8
+            );
+            Console.WriteLine(
+                $"[LinuxCompat] initialized {originalName}: {original} (sidecar: {sidecar ?? "<none>"})"
+            );
         }
         finally
         {
@@ -127,8 +157,10 @@ internal static class LinuxNativeLibraryResolver
         if (TryCreateDirectory(directory))
             return directory;
 
-        directory = Path.Combine(Path.GetTempPath(),
-            $"SpaceEngineers2-NativeWrapperCache-{Environment.UserName}");
+        directory = Path.Combine(
+            Path.GetTempPath(),
+            $"SpaceEngineers2-NativeWrapperCache-{Environment.UserName}"
+        );
         return TryCreateDirectory(directory) ? directory : null;
     }
 
@@ -141,7 +173,9 @@ internal static class LinuxNativeLibraryResolver
         }
         catch (Exception exception)
         {
-            Console.WriteLine($"[LinuxCompat] WARNING: cannot create NativeWrapperCache at {directory}: {exception.Message}");
+            Console.WriteLine(
+                $"[LinuxCompat] WARNING: cannot create NativeWrapperCache at {directory}: {exception.Message}"
+            );
             return false;
         }
     }
@@ -192,21 +226,28 @@ internal static class LinuxNativeLibraryResolver
         List<string> directories = [];
         void Add(string? directory)
         {
-            if (directory is { Length: > 0 } && Directory.Exists(directory)
-                && !directories.Contains(directory, StringComparer.Ordinal))
+            if (
+                directory is { Length: > 0 }
+                && Directory.Exists(directory)
+                && !directories.Contains(directory, StringComparer.Ordinal)
+            )
                 directories.Add(directory);
         }
 
         Add(Environment.GetEnvironmentVariable("SE2_NATIVE_DIR"));
         // Pulsar copies Bin-placed plugin assets flat next to the compiled plugin assembly.
-        string? pluginDirectory = Path.GetDirectoryName(typeof(LinuxNativeLibraryResolver).Assembly.Location);
+        string? pluginDirectory = Path.GetDirectoryName(
+            typeof(LinuxNativeLibraryResolver).Assembly.Location
+        );
         if (pluginDirectory is { Length: > 0 })
         {
             Add(pluginDirectory);
             Add(Path.Combine(pluginDirectory, "native"));
         }
         Add(Path.Combine(AppContext.BaseDirectory, "native"));
-        Console.WriteLine($"[LinuxCompat] native library directories: {string.Join(", ", directories)}");
+        Console.WriteLine(
+            $"[LinuxCompat] native library directories: {string.Join(", ", directories)}"
+        );
         return directories.ToArray();
     }
 
@@ -218,7 +259,9 @@ internal static class LinuxNativeLibraryResolver
     {
         Environment.SetEnvironmentVariable(name, value);
         if (setenv(name, value, overwrite: 1) != 0)
-            throw new InvalidOperationException($"Failed to set native environment variable {name}.");
+            throw new InvalidOperationException(
+                $"Failed to set native environment variable {name}."
+            );
     }
 
     [DllImport("libc", SetLastError = true)]

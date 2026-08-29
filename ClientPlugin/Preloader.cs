@@ -1,7 +1,9 @@
 // ReSharper disable CheckNamespace
 
 using System.Collections.Generic;
-using LinuxCompat.Patches.Install;
+using HarmonyLib;
+using LinuxCompat.Platform;
+using LinuxCompat.Preloading;
 using Mono.Cecil;
 
 // IMPORTANT: MUST NOT USE A NAMESPACE, otherwise Pulsar won't find the Preloader class!
@@ -28,7 +30,10 @@ public static class Preloader
     // ReSharper disable once UnusedMember.Global
     public static void Finish()
     {
-        PatchInstaller.InstallAll();
+        ManagedAssemblyResolver.Install();
+        LinuxNativeLibraryResolver.Install();
+        new Harmony("LinuxCompat").PatchCategory("Finish");
+        Console.WriteLine("[LinuxCompat] Installed all Linux compatibility patches.");
     }
 
     private static bool ReadyToRunDisabled() =>

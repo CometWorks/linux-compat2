@@ -17,7 +17,10 @@ public static class PreloaderHelpers
 {
     public delegate bool CodeInstructionPredicate(Instruction ci);
 
-    public static int FindFirstIndex(this Collection<Instruction> il, CodeInstructionPredicate predicate)
+    public static int FindFirstIndex(
+        this Collection<Instruction> il,
+        CodeInstructionPredicate predicate
+    )
     {
         return il.Select((instruction, index) => new { Instruction = instruction, Index = index })
             .Where(pair => predicate(pair.Instruction))
@@ -25,7 +28,10 @@ public static class PreloaderHelpers
             .FirstOrDefault(i => i == -1); // Do NOT simplify this call on .NET 10, because that won't build on .Net Framework 4.8
     }
 
-    public static int FindLastIndex(this Collection<Instruction> il, CodeInstructionPredicate predicate)
+    public static int FindLastIndex(
+        this Collection<Instruction> il,
+        CodeInstructionPredicate predicate
+    )
     {
         return il.Select((instruction, index) => new { Instruction = instruction, Index = index })
             .Where(pair => predicate(pair.Instruction))
@@ -33,7 +39,10 @@ public static class PreloaderHelpers
             .LastOrDefault(i => i == -1); // Do NOT simplify this call on .NET 10, because that won't build on .Net Framework 4.8
     }
 
-    public static List<int> FindAllIndex(this Collection<Instruction> il, CodeInstructionPredicate predicate)
+    public static List<int> FindAllIndex(
+        this Collection<Instruction> il,
+        CodeInstructionPredicate predicate
+    )
     {
         return il.Select((instruction, index) => new { Instruction = instruction, Index = index })
             .Where(pair => predicate(pair.Instruction))
@@ -46,10 +55,17 @@ public static class PreloaderHelpers
         return instructions.HashInstructions().CombineHashCodes().ToString("x8");
     }
 
-    public static void VerifyCodeHash(this Collection<Instruction> il, MethodDefinition patchedMethod, string expected)
+    public static void VerifyCodeHash(
+        this Collection<Instruction> il,
+        MethodDefinition patchedMethod,
+        string expected
+    )
     {
         var actual = il.Hash();
-        if (actual != expected) throw new Exception($"Prepatch: Detected code change in {patchedMethod.Name}: expected {expected}, actual {actual}");
+        if (actual != expected)
+            throw new Exception(
+                $"Prepatch: Detected code change in {patchedMethod.Name}: expected {expected}, actual {actual}"
+            );
     }
 
     private static string FormatCode(this Collection<Instruction> instructions)
@@ -146,31 +162,37 @@ public static class PreloaderHelpers
     {
         var sb = new StringBuilder();
 
-        // Return type
         sb.Append(FormatTypeReference(methodRef.ReturnType));
         sb.Append(' ');
 
-        // Declaring type
         if (methodRef.DeclaringType != null)
         {
             sb.Append(FormatTypeReference(methodRef.DeclaringType));
             sb.Append("::");
         }
 
-        // Method name
         sb.Append(methodRef.Name);
 
-        // Generic parameters
-        if (methodRef is GenericInstanceMethod genericMethod && genericMethod.GenericArguments.Count > 0)
+        if (
+            methodRef is GenericInstanceMethod genericMethod
+            && genericMethod.GenericArguments.Count > 0
+        )
         {
             sb.Append('<');
-            sb.Append(string.Join(", ", genericMethod.GenericArguments.Select(FormatTypeReference)));
+            sb.Append(
+                string.Join(", ", genericMethod.GenericArguments.Select(FormatTypeReference))
+            );
             sb.Append('>');
         }
 
-        // Parameters
         sb.Append('(');
-        if (methodRef.HasParameters) sb.Append(string.Join(", ", methodRef.Parameters.Select(p => FormatTypeReference(p.ParameterType))));
+        if (methodRef.HasParameters)
+            sb.Append(
+                string.Join(
+                    ", ",
+                    methodRef.Parameters.Select(p => FormatTypeReference(p.ParameterType))
+                )
+            );
         sb.Append(')');
 
         return sb.ToString();
@@ -181,11 +203,9 @@ public static class PreloaderHelpers
         if (typeRef == null)
             return "void";
 
-        // Handle generic instances
         if (typeRef is GenericInstanceType genericType)
         {
             var baseName = genericType.ElementType.Name;
-            // Remove `1, `2 etc from generic type names
             var tickIndex = baseName.IndexOf('`');
             if (tickIndex > 0)
                 baseName = baseName.Substring(0, tickIndex);
@@ -193,16 +213,15 @@ public static class PreloaderHelpers
             return $"{genericType.Namespace}.{baseName}<{string.Join(", ", genericType.GenericArguments.Select(FormatTypeReference))}>";
         }
 
-        // Handle arrays
-        if (typeRef is ArrayType arrayType) return FormatTypeReference(arrayType.ElementType) + "[]";
+        if (typeRef is ArrayType arrayType)
+            return FormatTypeReference(arrayType.ElementType) + "[]";
 
-        // Handle by reference
-        if (typeRef is ByReferenceType byRefType) return FormatTypeReference(byRefType.ElementType) + "&";
+        if (typeRef is ByReferenceType byRefType)
+            return FormatTypeReference(byRefType.ElementType) + "&";
 
-        // Handle pointers
-        if (typeRef is PointerType pointerType) return FormatTypeReference(pointerType.ElementType) + "*";
+        if (typeRef is PointerType pointerType)
+            return FormatTypeReference(pointerType.ElementType) + "*";
 
-        // Simple type
         if (!string.IsNullOrEmpty(typeRef.Namespace))
             return $"{typeRef.Namespace}.{typeRef.Name}";
 
@@ -224,22 +243,44 @@ public static class PreloaderHelpers
         return sb.ToString();
     }
 
-    public static void RecordOriginalCode(this Collection<Instruction> instructions, MethodDefinition method, [CallerFilePath] string callerFilePath = "", [CallerMemberName] string callerMemberName = "")
+    public static void RecordOriginalCode(
+        this Collection<Instruction> instructions,
+        MethodDefinition method,
+        [CallerFilePath] string callerFilePath = "",
+        [CallerMemberName] string callerMemberName = ""
+    )
     {
         RecordCode(instructions, method, callerFilePath, callerMemberName, "original");
     }
 
-    public static void RecordPatchedCode(this Collection<Instruction> instructions, MethodDefinition method, [CallerFilePath] string callerFilePath = "", [CallerMemberName] string callerMemberName = "")
+    public static void RecordPatchedCode(
+        this Collection<Instruction> instructions,
+        MethodDefinition method,
+        [CallerFilePath] string callerFilePath = "",
+        [CallerMemberName] string callerMemberName = ""
+    )
     {
         RecordCode(instructions, method, callerFilePath, callerMemberName, "patched");
     }
 
-    public static void RecordCustomCode(this Collection<Instruction> instructions, MethodDefinition method, string suffix, [CallerFilePath] string callerFilePath = "", [CallerMemberName] string callerMemberName = "")
+    public static void RecordCustomCode(
+        this Collection<Instruction> instructions,
+        MethodDefinition method,
+        string suffix,
+        [CallerFilePath] string callerFilePath = "",
+        [CallerMemberName] string callerMemberName = ""
+    )
     {
         RecordCode(instructions, method, callerFilePath, callerMemberName, suffix);
     }
 
-    private static void RecordCode(Collection<Instruction> instructions, MethodDefinition method, string callerFilePath, string callerMemberName, string suffix)
+    private static void RecordCode(
+        Collection<Instruction> instructions,
+        MethodDefinition method,
+        string callerFilePath,
+        string callerMemberName,
+        string suffix
+    )
     {
 #if DEBUG
         Debug.Assert(callerFilePath.Length > 0);
@@ -251,11 +292,16 @@ public static class PreloaderHelpers
         if (dir == null)
             return;
 
-        var name = method == null
-            ? callerMemberName.EndsWith("Prepatch")
-                ? callerMemberName.Substring(0, callerMemberName.Length - "Prepatch".Length)
-                : callerMemberName
-            : method.DeclaringType.Name.Split('`')[0] + "." + method.Name.Replace(".ctor", "Constructor").Replace(".cctor", "StaticConstructor");
+        var name =
+            method == null
+                ? callerMemberName.EndsWith("Prepatch")
+                    ? callerMemberName.Substring(0, callerMemberName.Length - "Prepatch".Length)
+                    : callerMemberName
+                : method.DeclaringType.Name.Split('`')[0]
+                    + "."
+                    + method
+                        .Name.Replace(".ctor", "Constructor")
+                        .Replace(".cctor", "StaticConstructor");
 
         // For compiler-generated methods (containing non-alphanumeric chars other than _),
         // extract just the local function name, e.g., "<LoadFromFile>g__PerformLoad|0" -> "PerformLoad"
@@ -264,9 +310,11 @@ public static class PreloaderHelpers
             var match = System.Text.RegularExpressions.Regex.Match(name, @"g__(\w+)");
             name = match.Success
                 ? match.Groups[1].Value
-                : new string(name.Where(c => char.IsLetterOrDigit(c) || c == '_' || c == '.').ToArray());
+                : new string(
+                    name.Where(c => char.IsLetterOrDigit(c) || c == '_' || c == '.').ToArray()
+                );
         }
-        
+
         var path = Path.Combine(dir, $"{name}.{suffix}.il");
 
         var text = instructions.FormatCode();

@@ -21,11 +21,15 @@ namespace LinuxCompat.Platform;
 internal sealed class LinuxMemoryEngineComponent : EngineComponent, IPlatformMemory
 {
     public bool HasVirtualMemory => true;
-    public ulong TotalPhysicalMemory => (ulong)Math.Max(0, GC.GetGCMemoryInfo().TotalAvailableMemoryBytes);
+    public ulong TotalPhysicalMemory =>
+        (ulong)Math.Max(0, GC.GetGCMemoryInfo().TotalAvailableMemoryBytes);
     public long ProcessMemory => Environment.WorkingSet;
     public bool IsAllocationProfilingReady => true;
-    public IPlatformMemory.AvailableMemoryState MemoryState => IPlatformMemory.AvailableMemoryState.Normal;
+    public IPlatformMemory.AvailableMemoryState MemoryState =>
+        IPlatformMemory.AvailableMemoryState.Normal;
+
     public ulong GetThreadAllocationStamp() => (ulong)GC.GetAllocatedBytesForCurrentThread();
+
     public ulong GetGlobalAllocationsStamp() => (ulong)GC.GetTotalAllocatedBytes(precise: false);
 
     /// <summary>
@@ -77,11 +81,23 @@ internal sealed class LinuxMemoryEngineComponent : EngineComponent, IPlatformMem
 [DefaultTag("IPlatformRender")]
 internal sealed class LinuxRenderEngineComponent : EngineComponent, IPlatformRender
 {
-    public event Action? OnResuming { add { } remove { } }
-    public event Action? OnSuspending { add { } remove { } }
+    public event Action? OnResuming
+    {
+        add { }
+        remove { }
+    }
+    public event Action? OnSuspending
+    {
+        add { }
+        remove { }
+    }
+
     public void SuspendRenderContext() { }
+
     public void ResumeRenderContext() { }
+
     public Rational GetMonitorDefaultRefreshRate(nint hMonitor) => Rational.Zero;
+
     public bool IsDeveloperModeEnabled() => false;
 }
 
@@ -90,16 +106,23 @@ internal sealed class LinuxSystemEngineComponent : EngineComponent, IPlatformSys
 {
     private static readonly IPlatformDiagnostics PlatformDiagnostics = new LinuxDiagnostics();
 
-    public IPlatformSystem.SimulationQualityEnum SimulationQuality => IPlatformSystem.SimulationQualityEnum.Normal;
+    public IPlatformSystem.SimulationQualityEnum SimulationQuality =>
+        IPlatformSystem.SimulationQualityEnum.Normal;
     public bool IsSingleInstance => true;
     public bool IsDeprecatedOS => false;
-    public string ThreeLetterISORegionName => GetRegion(static region => region.ThreeLetterISORegionName);
-    public string TwoLetterISORegionName => GetRegion(static region => region.TwoLetterISORegionName);
+    public string ThreeLetterISORegionName =>
+        GetRegion(static region => region.ThreeLetterISORegionName);
+    public string TwoLetterISORegionName =>
+        GetRegion(static region => region.TwoLetterISORegionName);
     public string RegionLatitude => string.Empty;
     public string RegionLongitude => string.Empty;
     public IPlatformDiagnostics Diagnostics => PlatformDiagnostics;
     public float CPULoad => 0;
-    public event Action<string>? OnSystemProtocolActivated { add { } remove { } }
+    public event Action<string>? OnSystemProtocolActivated
+    {
+        add { }
+        remove { }
+    }
 
     public void LogEnvironmentInformation()
     {
@@ -117,10 +140,16 @@ internal sealed class LinuxSystemEngineComponent : EngineComponent, IPlatformSys
     }
 
     public uint? GetMaxClockSpeedCpuMHz() => null;
+
     public bool? IsHardwareAcceleratedGpuSchedulingEnabled() => null;
-    public Keen.VRage.Library.Filesystem.DriveType? GetProcessDriveType() => Keen.VRage.Library.Filesystem.DriveType.Unspecified;
+
+    public Keen.VRage.Library.Filesystem.DriveType? GetProcessDriveType() =>
+        Keen.VRage.Library.Filesystem.DriveType.Unspecified;
+
     public void OnSessionStarted(IPlatformSystem.SessionType sessionType) { }
+
     public void OnSessionUnloaded() { }
+
     public void ResetColdStartRegister() { }
 
     public bool OpenUrl(string url)
@@ -137,7 +166,9 @@ internal sealed class LinuxSystemEngineComponent : EngineComponent, IPlatformSys
     }
 
     public DateTime GetNetworkTimeUTC() => DateTime.UtcNow;
+
     public TimeSpan GetJitCompilationTime() => JitInfo.GetCompilationTime(currentThread: true);
+
     public void LogToExternalDebugger(string message) => Debug.WriteLine(message);
 
     /// <summary>
@@ -149,13 +180,20 @@ internal sealed class LinuxSystemEngineComponent : EngineComponent, IPlatformSys
 
     private static string GetRegion(Func<RegionInfo, string> selector)
     {
-        try { return selector(RegionInfo.CurrentRegion); }
-        catch (CultureNotFoundException) { return string.Empty; }
+        try
+        {
+            return selector(RegionInfo.CurrentRegion);
+        }
+        catch (CultureNotFoundException)
+        {
+            return string.Empty;
+        }
     }
 
     private sealed class LinuxDiagnostics : IPlatformDiagnostics
     {
         public void ThrowExceptionInMessageLoop() { }
+
         public void CreateAccessViolation() { }
     }
 }
@@ -188,8 +226,18 @@ internal sealed class LinuxWindowsEngineComponent : EngineComponent, IPlatformWi
     public MessageBoxResult MessageBox(string text, string caption, MessageBoxOptions options) =>
         Singleton<VRageCore>.Instance.PlatformCore.CrashReporter.MessageBox(text, caption, options);
 
-    public MessageBoxResult MessageBoxLocalized(LocKey text, LocKey caption, MessageBoxOptions options, Dictionary<string, object>? formatArguments = null) =>
-        Singleton<VRageCore>.Instance.PlatformCore.CrashReporter.MessageBoxLocalized(text, caption, options, formatArguments);
+    public MessageBoxResult MessageBoxLocalized(
+        LocKey text,
+        LocKey caption,
+        MessageBoxOptions options,
+        Dictionary<string, object>? formatArguments = null
+    ) =>
+        Singleton<VRageCore>.Instance.PlatformCore.CrashReporter.MessageBoxLocalized(
+            text,
+            caption,
+            options,
+            formatArguments
+        );
 
     public void SetRenderWindow(IPlatformWindow window)
     {

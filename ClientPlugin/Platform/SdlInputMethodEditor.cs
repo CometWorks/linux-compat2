@@ -41,8 +41,10 @@ internal sealed class SdlInputMethodEditor : IInputMethodEditor, ITextInputMetho
     internal void SetPreedit(string text, int scalarOffset)
     {
         if (_client?.SupportsPreedit == true)
-            _client.SetPreeditText(text.Length == 0 ? null : text,
-                scalarOffset < 0 ? null : ToUtf16Offset(text, scalarOffset));
+            _client.SetPreeditText(
+                text.Length == 0 ? null : text,
+                scalarOffset < 0 ? null : ToUtf16Offset(text, scalarOffset)
+            );
     }
 
     internal static int ToUtf16Offset(string text, int scalarOffset)

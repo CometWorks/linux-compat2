@@ -41,7 +41,9 @@ internal static unsafe class LinuxSplashScreen
         }
         catch (Exception exception)
         {
-            Console.Error.WriteLine($"[LinuxCompat] Could not show the splash screen: {exception.Message}");
+            Console.Error.WriteLine(
+                $"[LinuxCompat] Could not show the splash screen: {exception.Message}"
+            );
         }
     }
 
@@ -59,8 +61,17 @@ internal static unsafe class LinuxSplashScreen
         _pixels = pixels;
         _width = width;
         _height = height;
-        _window = SDL_CreateWindow("Space Engineers 2", width, height,
-            WindowHidden | WindowBorderless | WindowHighPixelDensity | WindowAlwaysOnTop | WindowTransparent | WindowNotFocusable);
+        _window = SDL_CreateWindow(
+            "Space Engineers 2",
+            width,
+            height,
+            WindowHidden
+                | WindowBorderless
+                | WindowHighPixelDensity
+                | WindowAlwaysOnTop
+                | WindowTransparent
+                | WindowNotFocusable
+        );
         if (_window == 0)
             throw new InvalidOperationException($"SDL splash window creation failed: {GetError()}");
         try
@@ -71,16 +82,22 @@ internal static unsafe class LinuxSplashScreen
             if (!SDL_ShowWindow(_window))
                 throw new InvalidOperationException($"SDL splash show failed: {GetError()}");
             if (!SDL_SyncWindow(_window))
-                throw new InvalidOperationException($"SDL splash synchronization failed: {GetError()}");
+                throw new InvalidOperationException(
+                    $"SDL splash synchronization failed: {GetError()}"
+                );
             bool iconApplied = SdlPlatformWindow.ApplyWindowIcon(_window, iconPath);
-            (int logicalWidth, int logicalHeight, int pixelWidth, int pixelHeight, float density) = Resize();
+            (int logicalWidth, int logicalHeight, int pixelWidth, int pixelHeight, float density) =
+                Resize();
             Draw();
             if (Math.Abs(pixelWidth - width) > 1 || Math.Abs(pixelHeight - height) > 1)
-                throw new InvalidOperationException($"Splash drawable is {pixelWidth}x{pixelHeight}, expected {width}x{height}.");
+                throw new InvalidOperationException(
+                    $"Splash drawable is {pixelWidth}x{pixelHeight}, expected {width}x{height}."
+                );
 
             _windowId = SDL_GetWindowID(_window);
             SdlThread.Event += HandleEvent;
-            Status = $"driver={SdlThread.VideoDriver ?? "unknown"}, image={width}x{height}, logical={logicalWidth}x{logicalHeight}, pixels={pixelWidth}x{pixelHeight}, density={density:0.##}, icon={iconApplied.ToString().ToLowerInvariant()}";
+            Status =
+                $"driver={SdlThread.VideoDriver ?? "unknown"}, image={width}x{height}, logical={logicalWidth}x{logicalHeight}, pixels={pixelWidth}x{pixelHeight}, density={density:0.##}, icon={iconApplied.ToString().ToLowerInvariant()}";
             Console.WriteLine($"[LinuxCompat] Splash displayed: {Status}");
         }
         catch
@@ -108,11 +125,22 @@ internal static unsafe class LinuxSplashScreen
             return;
         if (e.Type == EventWindowDisplayScaleChanged)
             Resize();
-        if (e.Type is EventWindowExposed or EventWindowPixelSizeChanged or EventWindowDisplayScaleChanged)
+        if (
+            e.Type
+            is EventWindowExposed
+                or EventWindowPixelSizeChanged
+                or EventWindowDisplayScaleChanged
+        )
             Draw();
     }
 
-    private static (int LogicalWidth, int LogicalHeight, int PixelWidth, int PixelHeight, float Density) Resize()
+    private static (
+        int LogicalWidth,
+        int LogicalHeight,
+        int PixelWidth,
+        int PixelHeight,
+        float Density
+    ) Resize()
     {
         float density = SDL_GetWindowPixelDensity(_window);
         if (density <= 0)
@@ -122,7 +150,9 @@ internal static unsafe class LinuxSplashScreen
         if (!SDL_SetWindowSize(_window, logicalWidth, logicalHeight))
             throw new InvalidOperationException($"SDL splash resize failed: {GetError()}");
         if (SdlThread.IsWayland && !SDL_SyncWindow(_window))
-            throw new InvalidOperationException($"SDL splash resize synchronization failed: {GetError()}");
+            throw new InvalidOperationException(
+                $"SDL splash resize synchronization failed: {GetError()}"
+            );
         if (!SDL_GetWindowSizeInPixels(_window, out int pixelWidth, out int pixelHeight))
             throw new InvalidOperationException($"SDL splash drawable query failed: {GetError()}");
         return (logicalWidth, logicalHeight, pixelWidth, pixelHeight, density);
@@ -132,19 +162,34 @@ internal static unsafe class LinuxSplashScreen
     {
         fixed (byte* data = _pixels)
         {
-            nint source = SDL_CreateSurfaceFrom(_width, _height, PixelFormatRgba32, data, _width * 4);
+            nint source = SDL_CreateSurfaceFrom(
+                _width,
+                _height,
+                PixelFormatRgba32,
+                data,
+                _width * 4
+            );
             if (source == 0)
-                throw new InvalidOperationException($"SDL splash surface creation failed: {GetError()}");
+                throw new InvalidOperationException(
+                    $"SDL splash surface creation failed: {GetError()}"
+                );
             try
             {
                 nint destination = SDL_GetWindowSurface(_window);
-                if (destination == 0 || !SDL_GetWindowSizeInPixels(_window, out int width, out int height))
-                    throw new InvalidOperationException($"SDL splash window surface failed: {GetError()}");
+                if (
+                    destination == 0
+                    || !SDL_GetWindowSizeInPixels(_window, out int width, out int height)
+                )
+                    throw new InvalidOperationException(
+                        $"SDL splash window surface failed: {GetError()}"
+                    );
                 var destinationRect = new SdlRect(0, 0, width, height);
-                if (!SDL_FillSurfaceRect(destination, null, 0)
+                if (
+                    !SDL_FillSurfaceRect(destination, null, 0)
                     || !SDL_SetSurfaceBlendMode(source, BlendModeBlend)
                     || !SDL_BlitSurfaceScaled(source, null, destination, &destinationRect, 1)
-                    || !SDL_UpdateWindowSurface(_window))
+                    || !SDL_UpdateWindowSurface(_window)
+                )
                     throw new InvalidOperationException($"SDL splash drawing failed: {GetError()}");
             }
             finally
@@ -192,7 +237,11 @@ internal static unsafe class LinuxSplashScreen
 
     [DllImport(Sdl, EntryPoint = "SDL_GetWindowSizeInPixels")]
     [return: MarshalAs(UnmanagedType.I1)]
-    private static extern bool SDL_GetWindowSizeInPixels(nint window, out int width, out int height);
+    private static extern bool SDL_GetWindowSizeInPixels(
+        nint window,
+        out int width,
+        out int height
+    );
 
     [DllImport(Sdl, EntryPoint = "SDL_GetWindowID")]
     private static extern uint SDL_GetWindowID(nint window);
@@ -205,11 +254,23 @@ internal static unsafe class LinuxSplashScreen
     private static extern bool SDL_UpdateWindowSurface(nint window);
 
     [DllImport(Sdl, EntryPoint = "SDL_CreateSurfaceFrom")]
-    private static extern nint SDL_CreateSurfaceFrom(int width, int height, uint format, void* pixels, int pitch);
+    private static extern nint SDL_CreateSurfaceFrom(
+        int width,
+        int height,
+        uint format,
+        void* pixels,
+        int pitch
+    );
 
     [DllImport(Sdl, EntryPoint = "SDL_BlitSurfaceScaled")]
     [return: MarshalAs(UnmanagedType.I1)]
-    private static extern bool SDL_BlitSurfaceScaled(nint source, SdlRect* sourceRect, nint destination, SdlRect* destinationRect, int scaleMode);
+    private static extern bool SDL_BlitSurfaceScaled(
+        nint source,
+        SdlRect* sourceRect,
+        nint destination,
+        SdlRect* destinationRect,
+        int scaleMode
+    );
 
     [DllImport(Sdl, EntryPoint = "SDL_FillSurfaceRect")]
     [return: MarshalAs(UnmanagedType.I1)]

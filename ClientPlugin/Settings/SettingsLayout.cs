@@ -1,14 +1,10 @@
 namespace ClientPlugin.Settings;
 
-// Tweakable layout constants for the Settings UI.
-// Adjust these to match the amount of content and the fonts used by your plugin.
 internal static class SettingsLayout
 {
-    // Overall dialog size in pixels (centered inside the full-screen overlay).
     public static double DialogWidth = 760;
     public static double DialogHeight = 840;
 
-    // Width of the fixed left column used for each row's label.
     public static double LabelColumnWidth = 180;
 
     // Minimum height for each value row. Matches ControlHeight so every row
