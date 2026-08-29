@@ -51,7 +51,7 @@ internal static class LinuxNativeLibraryResolver
         DllImportSearchPath? searchPath
     ) =>
         libraryName.Equals("dxcompiler.dll", StringComparison.OrdinalIgnoreCase)
-            ? Load(GetPath("SE2_DXCOMPILER_LIBRARY", NativePath("libSE2DxcCompiler.so")))
+            ? Load(GetPath("SE2_DXCOMPILER_LIBRARY", NativePath("libdxcompiler.so")))
             : 0;
 
     /// <summary>
@@ -102,7 +102,7 @@ internal static class LinuxNativeLibraryResolver
             ),
             "dxcompiler" or "dxcompiler.dll" => GetPath(
                 "SE2_DXCOMPILER_LIBRARY",
-                NativePath("libSE2DxcCompiler.so")
+                NativePath("libdxcompiler.so")
             ),
             "steam_api" or "steam_api64" => GetPath(
                 "SE2_STEAM_API_LIBRARY",
