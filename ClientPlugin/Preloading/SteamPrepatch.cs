@@ -13,14 +13,33 @@ namespace LinuxCompat.Preloading;
 /// Harmony (their tokens no longer resolve) and must be rewritten in IL. The desktop-Steam
 /// restart is additionally limited to an active Steam connection so daemonless Linux runs
 /// keep SE2's inactive NoSteam state instead of terminating.
+///
+/// One further rewrite is opt-in and not a Linux concern at all: with
+/// <c>SE2_DISABLE_FORCED_REDOWNLOAD</c> set, <c>DownloadItem</c> stops re-fetching mods Steam has
+/// already installed, which is what makes a world of more than a handful of workshop mods loadable
+/// (see <see cref="PatchForcedRedownload"/>).
 /// </summary>
 public static class SteamPrepatch
 {
-    public static void Apply(AssemblyDefinition assembly)
+    /// <summary>Set to <c>1</c> or <c>true</c> to also apply <see cref="PatchForcedRedownload"/>,
+    /// which is off by default because it changes how the game talks to Steam rather than how it
+    /// runs on Linux.</summary>
+    public const string DisableForcedRedownloadVariable = "SE2_DISABLE_FORCED_REDOWNLOAD";
+
+    public static bool DisableForcedRedownloadRequested =>
+        Environment.GetEnvironmentVariable(DisableForcedRedownloadVariable) is { } value
+        && (value == "1" || string.Equals(value, "true", StringComparison.OrdinalIgnoreCase));
+
+    public static void Apply(AssemblyDefinition assembly) =>
+        Apply(assembly, DisableForcedRedownloadRequested);
+
+    public static void Apply(AssemblyDefinition assembly, bool disableForcedRedownload)
     {
         ModuleDefinition module = assembly.MainModule;
         PatchRefreshSubscribedItemSet(module);
         PatchInitializeAsUser(module);
+        if (disableForcedRedownload)
+            PatchForcedRedownload(module);
     }
 
     private static TypeDefinition FindType(ModuleDefinition module, string fullName) =>
@@ -151,6 +170,74 @@ public static class SteamPrepatch
         il.InsertBefore(statsCall, il.Create(OpCodes.Ldfld, steamUserId));
         statsCall.Operand = requestUserStats;
         RetargetReferences(method, statsCall, statsLoad);
+    }
+
+    /// <summary>Stop <c>DownloadItem</c> from honouring its <c>force</c> argument, so its own
+    /// "already installed and up to date" short-circuit applies to every caller.</summary>
+    /// <remarks>
+    /// <c>GetModDataFilesystemAsync</c> resolves every mod of a world with
+    /// <c>DownloadItem(id, force: true)</c>, re-fetching content Steam has already installed on
+    /// every single load. Steam serves a couple of items that way and then refuses the rest with
+    /// <c>k_EResultNoConnection</c>, and one refused item aborts the whole load — which is why a
+    /// world with more than a handful of workshop mods cannot be loaded. The guard this reinstates
+    /// still downloads anything missing, downloading or flagged <c>k_EItemStateNeedsUpdate</c>, so
+    /// a mod updated on the workshop is still fetched before it is mounted.
+    /// </remarks>
+    private static void PatchForcedRedownload(ModuleDefinition module)
+    {
+        TypeDefinition component = FindType(
+            module,
+            "Keen.VRage.Steam.UGC.SteamUGCServiceComponent"
+        );
+        TypeDefinition stateMachine =
+            component.NestedTypes.SingleOrDefault(nested =>
+                nested.Name.StartsWith("<DownloadItem>d__", StringComparison.Ordinal)
+            )
+            ?? throw new InvalidOperationException(
+                "[LinuxCompat] The DownloadItem async state machine was not found."
+            );
+        MethodDefinition moveNext = FindMethod(stateMachine, "MoveNext");
+
+        Instruction? load = null;
+        foreach (Instruction instruction in moveNext.Body.Instructions)
+        {
+            if (
+                instruction.OpCode.Code != Code.Ldfld
+                || instruction.Operand is not FieldReference field
+                || field.Name != "force"
+            )
+                continue;
+            if (load != null)
+                throw new InvalidOperationException(
+                    "[LinuxCompat] Multiple force loads in DownloadItem."
+                );
+            load = instruction;
+        }
+        if (load == null)
+            throw new InvalidOperationException("[LinuxCompat] No force load in DownloadItem.");
+
+        // The guard reads `ldarg.0; ldfld force; brtrue <skip the short-circuit>`.
+        if (
+            load.Previous?.OpCode.Code != Code.Ldarg_0
+            || load.Next?.OpCode.Code is not (Code.Brtrue or Code.Brtrue_S)
+        )
+            throw new InvalidOperationException(
+                "[LinuxCompat] DownloadItem force anchor mismatch."
+            );
+
+        // Rewritten in place rather than removed: both instructions keep their identity, so every
+        // branch target and exception handler boundary in the state machine stays valid.
+        load.Previous.OpCode = OpCodes.Nop;
+        load.Previous.Operand = null;
+        load.OpCode = OpCodes.Ldc_I4_0;
+        load.Operand = null;
+
+        // Said out loud: this one is opt-in and changes how the game talks to Steam, so a log
+        // that does not carry this line was produced by the stock resolution path.
+        Console.WriteLine(
+            $"[LinuxCompat] {DisableForcedRedownloadVariable} is set: DownloadItem no longer "
+                + "re-downloads mods Steam has already installed."
+        );
     }
 
     private static TypeReference FindSteamApiCallType(
