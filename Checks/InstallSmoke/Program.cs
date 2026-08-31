@@ -86,7 +86,10 @@ static void CheckSteamPrepatch(string game2)
         )
     )
     {
-        SteamPrepatch.Apply(assembly);
+        // Always with the opt-in rewrite on: the check exists to validate every IL anchor, and
+        // an anchor that is only exercised when an environment variable is set is exactly the
+        // one that rots unnoticed.
+        SteamPrepatch.Apply(assembly, disableForcedRedownload: true);
         // Pulsar clears the R2R native code when writing preloader-patched assemblies.
         assembly.MainModule.Attributes |= Mono.Cecil.ModuleAttributes.ILOnly;
         assembly.Write(output);
@@ -109,4 +112,23 @@ static void CheckSteamPrepatch(string game2)
         System.Runtime.CompilerServices.RuntimeHelpers.PrepareMethod(method.MethodHandle);
         Console.WriteLine($"OK: prepared {typeName}.{methodName}");
     }
+
+    // The forced-redownload rewrite lands in a compiler-generated async state machine, which is
+    // named rather than declared, so it is looked up the same way the patch does.
+    Type component = steam.GetType(
+        "Keen.VRage.Steam.UGC.SteamUGCServiceComponent",
+        throwOnError: true
+    )!;
+    Type downloadItem =
+        component
+            .GetNestedTypes(BindingFlags.NonPublic)
+            .SingleOrDefault(nested =>
+                nested.Name.StartsWith("<DownloadItem>d__", StringComparison.Ordinal)
+            )
+        ?? throw new InvalidOperationException("DownloadItem state machine not found.");
+    MethodInfo moveNext =
+        downloadItem.GetMethod("MoveNext", BindingFlags.Instance | BindingFlags.NonPublic)
+        ?? throw new MissingMethodException(downloadItem.Name, "MoveNext");
+    System.Runtime.CompilerServices.RuntimeHelpers.PrepareMethod(moveNext.MethodHandle);
+    Console.WriteLine($"OK: prepared {component.FullName}.{downloadItem.Name}.MoveNext");
 }

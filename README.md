@@ -114,6 +114,26 @@ Before `Program.Main` runs, the preloader converts the shipped ReadyToRun assemb
 `DOTNET_ReadyToRun=0` or `COMPlus_ReadyToRun=0` to skip those targets. The `VRage.Steam`
 compatibility rewrite still runs.
 
+## Loading a world with many workshop mods
+
+Space Engineers 2 re-downloads every mod of a world on every load, even when Steam has the
+content installed and current: `SteamUGCServiceComponent.GetModDataFilesystemAsync` resolves each
+mod with `DownloadItem(id, force: true)`. Steam serves a handful of items that way and then
+refuses the rest, and a single refusal aborts the whole load — so a world with more than a few
+mods is not reliably loadable. This is the game's behaviour, not a Linux one.
+
+Setting `SE2_DISABLE_FORCED_REDOWNLOAD=1` makes the preloader neutralise that `force` argument,
+which reinstates `DownloadItem`'s own guard: content that is installed and not flagged for update
+is used as it is, and anything missing or out of date is still downloaded before it is mounted.
+
+```bash
+SE2_DISABLE_FORCED_REDOWNLOAD=1 ~/.config/Pulsar/Modern.bin -noUpdate -sources -noPrompt \
+  -game2 /path/to/SpaceEngineers2/Game2
+```
+
+It is opt-in because it changes how the game talks to Steam rather than how it runs on Linux. A
+run with it applied logs one line saying so.
+
 ## Patching notes
 
 Harmony targets are declared with patch attributes and the `Finish` category. The preloader
