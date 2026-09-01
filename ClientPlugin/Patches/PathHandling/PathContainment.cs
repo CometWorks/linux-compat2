@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Keen.Game2;
 using LinuxCompat.Platform;
 
 namespace LinuxCompat.Patches.PathHandling;
@@ -40,11 +39,9 @@ internal static class PathContainment
     {
         var roots = new List<string>();
 
-        // The game installation: .../steamapps/common/SpaceEngineers2, discovered the same
-        // way the game discovers its own global search path (the Game2 folder holds the
-        // executing assembly; its parent is the install root).
-        string? game2Dir = Path.GetDirectoryName(typeof(GameApp).Assembly.Location);
-        string? installRoot = game2Dir is { Length: > 0 } ? Path.GetDirectoryName(game2Dir) : null;
+        // Pulsar sets the working directory to Game2 after preloaders finish and before the
+        // game starts. Unlike the preloaded assembly location, this remains in the installation.
+        string? installRoot = Path.GetDirectoryName(Environment.CurrentDirectory);
         if (installRoot is { Length: > 0 })
         {
             roots.Add(installRoot);
@@ -108,11 +105,10 @@ internal static class PathContainment
             string next = Path.Combine(current, part);
             try
             {
-                FileSystemInfo? info = Directory.Exists(next)
-                    ? new DirectoryInfo(next)
-                    : File.Exists(next)
-                        ? new FileInfo(next)
-                        : null;
+                FileSystemInfo? info =
+                    Directory.Exists(next) ? new DirectoryInfo(next)
+                    : File.Exists(next) ? new FileInfo(next)
+                    : null;
                 if (info?.LinkTarget != null)
                 {
                     FileSystemInfo? target = info.ResolveLinkTarget(returnFinalTarget: true);
