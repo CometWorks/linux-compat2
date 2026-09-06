@@ -11,6 +11,13 @@ using Mono.Cecil;
 // ReSharper disable once UnusedType.Global
 public static class Preloader
 {
+    /// <summary>
+    /// Runs before Pulsar patches anything. Fails with the names of the missing native
+    /// dependencies so users learn what to install instead of hitting a crash later.
+    /// </summary>
+    // ReSharper disable once UnusedMember.Global
+    public static void Initialize() => DependencyCheck.Run();
+
     // ReSharper disable once UnusedMember.Global
     public static IEnumerable<string> TargetDLLs =>
         ReadyToRunDisabled() ? ["VRage.Steam.dll"] : ReadyToRun.Dlls;
