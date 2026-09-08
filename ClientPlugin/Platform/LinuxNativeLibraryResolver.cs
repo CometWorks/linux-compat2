@@ -57,17 +57,15 @@ internal static class LinuxNativeLibraryResolver
     /// <summary>
     /// SDL3 is dlopen-ed by DXVK's SDL3 WSI backend by soname and P/Invoked by the SDL
     /// platform code. Loading the bundled build by absolute path first makes both the
-    /// dynamic linker and the managed resolver reuse the same instance.
+    /// dynamic linker and the managed resolver reuse the same instance: a later
+    /// dlopen("libSDL3.so.0") matches the SONAME of the already loaded object before it
+    /// searches any directory. Probing the bare soname first would do the opposite, since
+    /// plain dlopen searches LD_LIBRARY_PATH, ld.so.cache and the system directories, and
+    /// Steam's LD_LIBRARY_PATH or a distribution sdl3 package would then hand DXVK a
+    /// system SDL3 while the P/Invoke path still loads the bundled file.
     /// </summary>
-    private static void PreloadSdl()
-    {
-        if (NativeLibrary.TryLoad("libSDL3.so.0", out nint handle))
-        {
-            Handles["libSDL3.so.0"] = handle;
-            return;
-        }
+    private static void PreloadSdl() =>
         Load(GetPath("SE2_SDL3_LIBRARY", NativePath("libSDL3.so.0")));
-    }
 
     private static nint Resolve(Assembly assembly, string libraryName)
     {
