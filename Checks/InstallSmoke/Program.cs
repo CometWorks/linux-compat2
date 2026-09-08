@@ -50,6 +50,7 @@ AppDomain.CurrentDomain.AssemblyResolve += (_, resolveArgs) =>
 try
 {
     CheckSteamPrepatch(game2);
+    Preloader.Initialize();
     Preloader.Finish();
     int patchedMethods = Harmony.GetAllPatchedMethods().Count();
     if (patchedMethods != 67)

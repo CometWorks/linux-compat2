@@ -13,6 +13,9 @@ internal static class LinuxNativeLibraryResolver
     private static readonly Lazy<string?> WrapperCacheDirectory = new(CreateWrapperCacheDirectory);
     private static readonly Lazy<string[]> NativeDirectories = new(FindNativeDirectories);
 
+    /// <summary>Directories probed for bundled native libraries, in search order.</summary>
+    internal static string[] Directories => NativeDirectories.Value;
+
     public static void Install()
     {
         SetEnvironmentVariable("DXVK_WSI_DRIVER", "SDL3");
@@ -67,37 +70,47 @@ internal static class LinuxNativeLibraryResolver
     private static void PreloadSdl() =>
         Load(GetPath("SE2_SDL3_LIBRARY", NativePath("libSDL3.so.0")));
 
+    // PE-loader wrappers: loaded through Init(dllPath, sidecarPath) rather than plain dlopen.
+    private static readonly string[] Wrappers =
+    [
+        "VRage.Physics.Native.dll",
+        "VRage.Voxels.Native.dll",
+        "VRage.Slug.Native.dll",
+    ];
+
     private static nint Resolve(Assembly assembly, string libraryName)
     {
-        if (libraryName is "libSDL3.so.0" or "libSDL3.so" or "SDL3")
-            return Load(GetPath("SE2_SDL3_LIBRARY", NativePath("libSDL3.so.0")));
-        if (libraryName.Equals("VRage.Physics.Native.dll", StringComparison.OrdinalIgnoreCase))
-            return LoadWrapper(
-                GetPath("SE2_PHYSICS_LIBRARY", NativePath("libVRage.Physics.Native.so")),
-                libraryName
-            );
-        if (libraryName.Equals("VRage.Voxels.Native.dll", StringComparison.OrdinalIgnoreCase))
-            return LoadWrapper(
-                GetPath("SE2_VOXELS_LIBRARY", NativePath("libVRage.Voxels.Native.so")),
-                libraryName
-            );
-        if (libraryName.Equals("VRage.Slug.Native.dll", StringComparison.OrdinalIgnoreCase))
-            return LoadWrapper(
-                GetPath("SE2_SLUG_LIBRARY", NativePath("libVRage.Slug.Native.so")),
-                libraryName
-            );
-
         string? path = MapNativeLibrary(libraryName);
-        return path == null ? 0 : Load(path);
+        if (path == null)
+            return 0;
+        return Wrappers.Contains(libraryName, StringComparer.OrdinalIgnoreCase)
+            ? LoadWrapper(path, libraryName)
+            : Load(path);
     }
 
     /// <summary>
     /// Maps a P/Invoke library name onto the path of its Linux counterpart, or
     /// null when the name is not one this plugin substitutes.
     /// </summary>
-    private static string? MapNativeLibrary(string libraryName) =>
+    internal static string? MapNativeLibrary(string libraryName) =>
         libraryName.ToLowerInvariant() switch
         {
+            "libsdl3.so.0" or "libsdl3.so" or "sdl3" => GetPath(
+                "SE2_SDL3_LIBRARY",
+                NativePath("libSDL3.so.0")
+            ),
+            "vrage.physics.native.dll" => GetPath(
+                "SE2_PHYSICS_LIBRARY",
+                NativePath("libVRage.Physics.Native.so")
+            ),
+            "vrage.voxels.native.dll" => GetPath(
+                "SE2_VOXELS_LIBRARY",
+                NativePath("libVRage.Voxels.Native.so")
+            ),
+            "vrage.slug.native.dll" => GetPath(
+                "SE2_SLUG_LIBRARY",
+                NativePath("libVRage.Slug.Native.so")
+            ),
             "dxgi" or "dxgi.dll" => GetPath("SE2_DXGI_LIBRARY", NativePath("libdxvk_dxgi.so")),
             "d3d12" or "d3d12.dll" => GetPath(
                 "SE2_D3D12_LIBRARY",
