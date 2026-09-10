@@ -7,7 +7,17 @@ namespace LinuxCompat.Platform;
 
 internal static class LinuxNativeLibraryResolver
 {
+    /// <summary>
+    /// Guards <see cref="Handles"/> and <see cref="InitializedWrappers"/>. The resolving event
+    /// runs on whichever thread first binds a P/Invoke, so several threads can resolve
+    /// different libraries at the same time.
+    /// </summary>
+    private static readonly object Sync = new();
+
     private static readonly Dictionary<string, nint> Handles = new(
+        StringComparer.OrdinalIgnoreCase
+    );
+    private static readonly HashSet<string> InitializedWrappers = new(
         StringComparer.OrdinalIgnoreCase
     );
     private static readonly Lazy<string?> WrapperCacheDirectory = new(CreateWrapperCacheDirectory);
@@ -151,43 +161,65 @@ internal static class LinuxNativeLibraryResolver
     {
         if (MapNativeLibrary(libraryName) is not { } path)
             return false;
-        if (Handles.ContainsKey(path))
-            return true;
-        if (!File.Exists(path) || !NativeLibrary.TryLoad(path, out nint handle))
-            return false;
+        lock (Sync)
+        {
+            if (Handles.ContainsKey(path))
+                return true;
+            if (!File.Exists(path) || !NativeLibrary.TryLoad(path, out nint handle))
+                return false;
 
-        Handles[path] = handle;
-        return true;
+            Handles[path] = handle;
+            return true;
+        }
     }
 
+    /// <summary>
+    /// Loads a PE-loader wrapper and runs its <c>Init</c> export exactly once. The runtime does
+    /// not cache what a resolving-event handler returns, only the binding of the P/Invoke stub
+    /// it was raised for, so a wrapper is resolved again for every distinct entry point the game
+    /// calls: dozens of times for Physics alone. Each wrapper's own Init is idempotent, so the
+    /// PE and its sidecar were only built once regardless, but repeating the call re-enters the
+    /// wrapper's load mutex and repeats the log line.
+    /// </summary>
     private static unsafe nint LoadWrapper(string path, string originalName)
     {
-        nint handle = Load(path);
-        string original = Path.Combine(Environment.CurrentDirectory, originalName);
-        if (!File.Exists(original))
-            throw new FileNotFoundException("The original native library was not found.", original);
+        lock (Sync)
+        {
+            nint handle = Load(path);
+            if (InitializedWrappers.Contains(originalName))
+                return handle;
 
-        string? cacheDirectory = WrapperCacheDirectory.Value;
-        string? sidecar =
-            cacheDirectory == null ? null : Path.Combine(cacheDirectory, originalName);
-        nint originalUtf8 = Marshal.StringToCoTaskMemUTF8(original);
-        nint sidecarUtf8 = Marshal.StringToCoTaskMemUTF8(sidecar);
-        try
-        {
-            ((delegate* unmanaged[Cdecl]<nint, nint, void>)NativeLibrary.GetExport(handle, "Init"))(
-                originalUtf8,
-                sidecarUtf8
-            );
-            Console.WriteLine(
-                $"[LinuxCompat] initialized {originalName}: {original} (sidecar: {sidecar ?? "<none>"})"
-            );
+            string original = Path.Combine(Environment.CurrentDirectory, originalName);
+            if (!File.Exists(original))
+                throw new FileNotFoundException(
+                    "The original native library was not found.",
+                    original
+                );
+
+            string? cacheDirectory = WrapperCacheDirectory.Value;
+            string? sidecar =
+                cacheDirectory == null ? null : Path.Combine(cacheDirectory, originalName);
+            nint originalUtf8 = Marshal.StringToCoTaskMemUTF8(original);
+            nint sidecarUtf8 = Marshal.StringToCoTaskMemUTF8(sidecar);
+            try
+            {
+                (
+                    (delegate* unmanaged[Cdecl]<nint, nint, void>)
+                        NativeLibrary.GetExport(handle, "Init")
+                )(originalUtf8, sidecarUtf8);
+                // Recorded only after Init returned, so a failed one stays retryable.
+                InitializedWrappers.Add(originalName);
+                Console.WriteLine(
+                    $"[LinuxCompat] initialized {originalName}: {original} (sidecar: {sidecar ?? "<none>"})"
+                );
+            }
+            finally
+            {
+                Marshal.FreeCoTaskMem(originalUtf8);
+                Marshal.FreeCoTaskMem(sidecarUtf8);
+            }
+            return handle;
         }
-        finally
-        {
-            Marshal.FreeCoTaskMem(originalUtf8);
-            Marshal.FreeCoTaskMem(sidecarUtf8);
-        }
-        return handle;
     }
 
     private static string? CreateWrapperCacheDirectory()
@@ -225,9 +257,12 @@ internal static class LinuxNativeLibraryResolver
     {
         if (!File.Exists(path))
             throw new FileNotFoundException("Linux compatibility library was not found.", path);
-        if (!Handles.TryGetValue(path, out nint handle))
-            Handles[path] = handle = NativeLibrary.Load(path);
-        return handle;
+        lock (Sync)
+        {
+            if (!Handles.TryGetValue(path, out nint handle))
+                Handles[path] = handle = NativeLibrary.Load(path);
+            return handle;
+        }
     }
 
     private static string GetPath(string variable, string fallback) =>
