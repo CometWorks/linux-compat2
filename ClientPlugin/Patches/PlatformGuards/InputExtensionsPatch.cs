@@ -3,7 +3,7 @@ using Keen.VRage.Core.Input;
 using Keen.VRage.Input;
 using InputDescriptionExtensions = Keen.VRage.Input.Extensions.InputExtensions;
 
-namespace LinuxCompat.Patches.PlatformGuards;
+namespace ClientPlugin.Patches.PlatformGuards;
 
 [HarmonyPatch(
     typeof(InputDescriptionExtensions),

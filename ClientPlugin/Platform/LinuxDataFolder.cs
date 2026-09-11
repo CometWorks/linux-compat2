@@ -1,4 +1,4 @@
-namespace LinuxCompat.Platform;
+namespace ClientPlugin.Platform;
 
 /// <summary>
 /// The single source of truth for the game's data folder on Linux.

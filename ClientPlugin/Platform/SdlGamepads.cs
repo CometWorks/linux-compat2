@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 
-namespace LinuxCompat.Platform;
+namespace ClientPlugin.Platform;
 
 internal static class SdlGamepads
 {

@@ -1,9 +1,9 @@
+using ClientPlugin.Platform;
 using HarmonyLib;
 using Keen.VRage.Render.Data;
 using Keen.VRage.Render12.Core.Systems;
-using LinuxCompat.Platform;
 
-namespace LinuxCompat.Patches.Rendering;
+namespace ClientPlugin.Patches.Rendering;
 
 /// <summary>
 /// Steers FSR upscaling onto the FSR 3.1 provider, and falls back to FXAA when

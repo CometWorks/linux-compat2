@@ -1,9 +1,10 @@
 // ReSharper disable CheckNamespace
 
 using System.Collections.Generic;
+using ClientPlugin;
+using ClientPlugin.Platform;
+using ClientPlugin.Preloading;
 using HarmonyLib;
-using LinuxCompat.Platform;
-using LinuxCompat.Preloading;
 using Mono.Cecil;
 
 // IMPORTANT: MUST NOT USE A NAMESPACE, otherwise Pulsar won't find the Preloader class!

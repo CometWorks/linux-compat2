@@ -1,6 +1,6 @@
 using System.Reflection;
+using ClientPlugin.Preloading;
 using HarmonyLib;
-using LinuxCompat.Preloading;
 
 // Standalone check: installs every LinuxCompat Harmony patch against the original game
 // binaries without starting the game. All transpilers execute during installation, so this

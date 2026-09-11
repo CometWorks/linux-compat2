@@ -18,7 +18,7 @@ using Keen.VRage.Render12.UIStage;
 using Keen.VRage.Render12.Utils;
 using Vortice.Direct3D12;
 
-namespace LinuxCompat.Patches.Rendering;
+namespace ClientPlugin.Patches.Rendering;
 
 [HarmonyPatch(typeof(SwapChain), nameof(SwapChain.CreateD3DSwapChain))]
 [HarmonyPatchCategory("Finish")]

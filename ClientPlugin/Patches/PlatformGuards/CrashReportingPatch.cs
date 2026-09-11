@@ -1,7 +1,7 @@
 using HarmonyLib;
 using Keen.VRage.Core.Platform.CrashReporting;
 
-namespace LinuxCompat.Patches.PlatformGuards;
+namespace ClientPlugin.Patches.PlatformGuards;
 
 /// <summary>
 /// Disables crash and error reporting to Keen on Linux. Running the game on Linux is not

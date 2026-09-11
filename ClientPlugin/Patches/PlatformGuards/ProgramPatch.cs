@@ -1,7 +1,7 @@
+using ClientPlugin.Platform;
 using Keen.VRage.Core;
-using LinuxCompat.Platform;
 
-namespace LinuxCompat.Patches.PlatformGuards;
+namespace ClientPlugin.Patches.PlatformGuards;
 
 public static class ProgramPatch
 {

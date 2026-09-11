@@ -1,7 +1,7 @@
 using HarmonyLib;
 using Keen.VRage.Render12.Utils;
 
-namespace LinuxCompat.Patches.Rendering;
+namespace ClientPlugin.Patches.Rendering;
 
 [HarmonyPatch(typeof(NvApi), nameof(NvApi.Initialize))]
 [HarmonyPatchCategory("Finish")]

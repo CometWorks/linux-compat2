@@ -1,7 +1,7 @@
 using HarmonyLib;
 using Keen.VRage.Library.Filesystem;
 
-namespace LinuxCompat.Patches.PathHandling;
+namespace ClientPlugin.Patches.PathHandling;
 
 [HarmonyPatch(typeof(FileSystemHelpers), nameof(FileSystemHelpers.ToLowerInvariantCached))]
 [HarmonyPatchCategory("Finish")]

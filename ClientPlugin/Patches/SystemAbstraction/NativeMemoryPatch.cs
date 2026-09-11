@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using HarmonyLib;
 using GameNativeMemory = Keen.VRage.Library.Memory.NativeMemory;
 
-namespace LinuxCompat.Patches.SystemAbstraction;
+namespace ClientPlugin.Patches.SystemAbstraction;
 
 [HarmonyPatch(typeof(GameNativeMemory), nameof(GameNativeMemory.TotalAllocated), MethodType.Getter)]
 [HarmonyPatchCategory("Finish")]

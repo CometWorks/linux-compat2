@@ -13,7 +13,7 @@ using Keen.VRage.Render.EngineComponents;
 using RenderEngineBuilderExtensions = Keen.VRage.Render12.Extensions.EngineBuilderExtensions;
 using WindowsEngineBuilderExtensions = Keen.VRage.Platform.Windows.Extensions.EngineBuilderExtensions;
 
-namespace LinuxCompat.Patches.PlatformGuards;
+namespace ClientPlugin.Patches.PlatformGuards;
 
 [HarmonyPatch(typeof(Program), nameof(Program.Main), typeof(string[]))]
 [HarmonyPatchCategory("Finish")]

@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Keen.VRage.Library.Reflection.Advanced;
 
-namespace LinuxCompat.Patches.SystemAbstraction;
+namespace ClientPlugin.Patches.SystemAbstraction;
 
 [HarmonyPatch(typeof(TypeHelper), nameof(TypeHelper.GetValueTypeSize))]
 [HarmonyPatchCategory("Finish")]

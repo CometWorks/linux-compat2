@@ -2,7 +2,7 @@ using System.Net;
 using Keen.VRage.Core.Platform.Http;
 using Keen.VRage.Library.Filesystem;
 
-namespace LinuxCompat.Platform;
+namespace ClientPlugin.Platform;
 
 internal sealed class LinuxHttpClient : IPlatformHttp
 {

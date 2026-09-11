@@ -1,6 +1,6 @@
 using Vortice.Direct3D12;
 
-namespace LinuxCompat.Patches.Rendering;
+namespace ClientPlugin.Patches.Rendering;
 
 public static class D3D12ResourcePatch
 {

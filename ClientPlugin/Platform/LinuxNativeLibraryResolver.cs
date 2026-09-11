@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 using Vortice.Dxc;
 
-namespace LinuxCompat.Platform;
+namespace ClientPlugin.Platform;
 
 internal static class LinuxNativeLibraryResolver
 {
@@ -269,11 +269,10 @@ internal static class LinuxNativeLibraryResolver
         Environment.GetEnvironmentVariable(variable) is { Length: > 0 } value ? value : fallback;
 
     /// <summary>
-    /// Locates a bundled native library. Under Pulsar the libraries arrive as plugin assets in
-    /// subdirectories next to the compiled plugin assembly; the recompiled prototype places them
-    /// in <c>native/</c> next to the executable. Distribution archives name the versioned
-    /// libraries without their version suffix (for example <c>libfmod.so</c> for
-    /// <c>libfmod.so.14</c>), so each directory is probed with both spellings.
+    /// Locates a bundled native library in the directories reported by
+    /// <see cref="Directories"/>. Distribution archives name the versioned libraries without
+    /// their version suffix (for example <c>libfmod.so</c> for <c>libfmod.so.14</c>), so each
+    /// directory is probed with both spellings.
     /// </summary>
     private static string NativePath(string fileName)
     {

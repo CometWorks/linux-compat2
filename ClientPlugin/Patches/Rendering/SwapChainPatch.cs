@@ -1,8 +1,8 @@
+using ClientPlugin.Platform;
 using Keen.VRage.Core.Platform;
 using Keen.VRage.Core.Render;
-using LinuxCompat.Platform;
 
-namespace LinuxCompat.Patches.Rendering;
+namespace ClientPlugin.Patches.Rendering;
 
 public static class SwapChainPatch
 {

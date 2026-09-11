@@ -1,7 +1,7 @@
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
-namespace LinuxCompat.Preloading;
+namespace ClientPlugin.Preloading;
 
 /// <summary>
 /// Cecil rewrite of the shipped VRage.Steam.dll, applied by the Pulsar preloader before the
