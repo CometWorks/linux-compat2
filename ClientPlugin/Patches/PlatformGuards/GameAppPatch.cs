@@ -1,11 +1,10 @@
+using ClientPlugin.Platform;
 using Keen.VRage.Core;
 using Keen.VRage.Core.EngineComponents;
-using Keen.VRage.Core.Input;
 using Keen.VRage.Render.CoreConfigurations;
 using Keen.VRage.Render.EngineComponents;
-using LinuxCompat.Platform;
 
-namespace LinuxCompat.Patches.PlatformGuards;
+namespace ClientPlugin.Patches.PlatformGuards;
 
 public static class GameAppPatch
 {

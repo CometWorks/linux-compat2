@@ -2,7 +2,7 @@ using HarmonyLib;
 using Keen.VRage.Core.Project;
 using Keen.VRage.Library.Diagnostics;
 
-namespace LinuxCompat.Patches.PathHandling;
+namespace ClientPlugin.Patches.PathHandling;
 
 /// <summary>
 /// Guards every search path the project locator is about to cache.

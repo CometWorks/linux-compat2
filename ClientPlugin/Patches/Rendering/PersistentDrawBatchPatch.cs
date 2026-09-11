@@ -1,7 +1,7 @@
 using HarmonyLib;
 using Keen.VRage.Render.Contracts;
 
-namespace LinuxCompat.Patches.Rendering;
+namespace ClientPlugin.Patches.Rendering;
 
 [HarmonyPatch(typeof(PersistentDrawBatch), nameof(PersistentDrawBatch.Submit))]
 [HarmonyPatchCategory("Finish")]

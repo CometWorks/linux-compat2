@@ -4,7 +4,7 @@ using Keen.VRage.Core.Platform.CrashReporting;
 using Keen.VRage.Library.Filesystem;
 using Keen.VRage.Library.Mathematics;
 
-namespace LinuxCompat.Platform;
+namespace ClientPlugin.Platform;
 
 internal sealed class LinuxPlatformFactory : IPlatformFactory
 {

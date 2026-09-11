@@ -1,4 +1,4 @@
-namespace LinuxCompat.Patches.Rendering;
+namespace ClientPlugin.Patches.Rendering;
 
 public static class FramePacerPatch
 {

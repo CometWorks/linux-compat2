@@ -1,6 +1,6 @@
 using HarmonyLib;
 
-namespace LinuxCompat.Patches.SystemAbstraction;
+namespace ClientPlugin.Patches.SystemAbstraction;
 
 [HarmonyPatch(typeof(MemoryStream), nameof(Stream.CopyTo), typeof(Stream), typeof(int))]
 [HarmonyPatchCategory("Finish")]

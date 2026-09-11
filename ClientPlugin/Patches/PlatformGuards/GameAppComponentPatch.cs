@@ -1,7 +1,7 @@
-using LinuxCompat.Platform;
+using ClientPlugin.Platform;
 using VrTask = Keen.VRage.Library.Threading.Task;
 
-namespace LinuxCompat.Patches.PlatformGuards;
+namespace ClientPlugin.Patches.PlatformGuards;
 
 public static class GameAppComponentPatch
 {

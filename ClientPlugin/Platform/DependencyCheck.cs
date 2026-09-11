@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace LinuxCompat.Platform;
+namespace ClientPlugin.Platform;
 
 // Probes every native library the plugin needs before the game touches any of
 // them, so a missing package is reported by name instead of surfacing later as

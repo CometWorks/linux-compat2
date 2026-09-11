@@ -2,7 +2,7 @@ using System.Diagnostics;
 using HarmonyLib;
 using Keen.VRage.Library.Utils;
 
-namespace LinuxCompat.Patches.SystemAbstraction;
+namespace ClientPlugin.Patches.SystemAbstraction;
 
 [HarmonyPatch(typeof(AppTimer), nameof(AppTimer.ElapsedTicks), MethodType.Getter)]
 [HarmonyPatchCategory("Finish")]

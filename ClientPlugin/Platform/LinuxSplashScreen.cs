@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
-namespace LinuxCompat.Platform;
+namespace ClientPlugin.Platform;
 
 internal static unsafe class LinuxSplashScreen
 {

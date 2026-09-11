@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace LinuxCompat.Platform;
+namespace ClientPlugin.Platform;
 
 /// <summary>
 /// Reads the physical device type of each GPU straight from Vulkan.

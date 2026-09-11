@@ -2,7 +2,7 @@ using Avalonia;
 using Avalonia.Input.TextInput;
 using Keen.VRage.Core.Input;
 
-namespace LinuxCompat.Platform;
+namespace ClientPlugin.Platform;
 
 internal sealed class SdlInputMethodEditor : IInputMethodEditor, ITextInputMethodImpl
 {

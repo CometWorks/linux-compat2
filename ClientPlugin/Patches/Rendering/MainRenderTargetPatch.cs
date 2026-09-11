@@ -6,7 +6,7 @@ using Keen.VRage.Library.Mathematics;
 using Keen.VRage.Library.Utils;
 using Keen.VRage.Render.Contracts;
 
-namespace LinuxCompat.Patches.Rendering;
+namespace ClientPlugin.Patches.Rendering;
 
 /// <summary>
 /// Bounds save-game thumbnail captures to <see cref="SavesConfiguration.MaxThumbnailSize" />.

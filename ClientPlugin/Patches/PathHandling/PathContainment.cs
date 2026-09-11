@@ -1,9 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using LinuxCompat.Platform;
+using ClientPlugin.Platform;
 
-namespace LinuxCompat.Patches.PathHandling;
+namespace ClientPlugin.Patches.PathHandling;
 
 /// <summary>
 /// Decides whether a project search path the game is about to cache stays inside the

@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace LinuxCompat.Platform;
+namespace ClientPlugin.Platform;
 
 /// <summary>
 /// Immediate process termination: the Linux counterpart of the Win32 <c>ExitProcess</c> call

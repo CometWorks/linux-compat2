@@ -9,13 +9,12 @@ using Keen.VRage.Core.Platform.CrashReporting;
 using Keen.VRage.Core.Render;
 using Keen.VRage.DCS.Annotations;
 using Keen.VRage.DCS.Components;
-using Keen.VRage.Library.Filesystem;
 using Keen.VRage.Library.Localization;
 using Keen.VRage.Library.Mathematics;
 using Keen.VRage.Library.Utils;
 using VrTask = Keen.VRage.Library.Threading.Task;
 
-namespace LinuxCompat.Platform;
+namespace ClientPlugin.Platform;
 
 [DefaultTag("IPlatformMemory")]
 internal sealed class LinuxMemoryEngineComponent : EngineComponent, IPlatformMemory

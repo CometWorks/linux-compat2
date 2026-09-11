@@ -1,6 +1,6 @@
 using Keen.VRage.Library.Mathematics;
 
-namespace LinuxCompat.Patches.Rendering;
+namespace ClientPlugin.Patches.Rendering;
 
 public static class ScreenshotsManagerPatch
 {

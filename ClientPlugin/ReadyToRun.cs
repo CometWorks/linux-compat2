@@ -1,6 +1,8 @@
+namespace ClientPlugin;
+
 internal static class ReadyToRun
 {
-    // FIXME: Generate this with Mono.Cecil when Pulsar allows passing the game directory to Preloaders and runs Preloader.Initalise before finding targets
+    // FIXME: Generate this with Mono.Cecil when Pulsar allows passing the game directory to Preloaders and runs Preloader.Initialize before finding targets
     internal static readonly string[] Dlls =
     [
         "Avalonia.Base.dll",

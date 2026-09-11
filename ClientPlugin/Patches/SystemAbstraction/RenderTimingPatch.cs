@@ -2,7 +2,7 @@ using System.Diagnostics;
 using HarmonyLib;
 using Keen.VRage.Render12.Core.Systems;
 
-namespace LinuxCompat.Patches.SystemAbstraction;
+namespace ClientPlugin.Patches.SystemAbstraction;
 
 [HarmonyPatch(typeof(FramePacer), nameof(FramePacer.OnUpdatedRenderWorkTime))]
 [HarmonyPatchCategory("Finish")]

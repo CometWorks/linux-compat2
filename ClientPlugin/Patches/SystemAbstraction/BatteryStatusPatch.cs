@@ -1,7 +1,7 @@
 using HarmonyLib;
 using Keen.Game2.Client.RuntimeSystems;
 
-namespace LinuxCompat.Patches.SystemAbstraction;
+namespace ClientPlugin.Patches.SystemAbstraction;
 
 [HarmonyPatch(typeof(BatteryStatus), nameof(BatteryStatus.IsOnBattery))]
 [HarmonyPatchCategory("Finish")]

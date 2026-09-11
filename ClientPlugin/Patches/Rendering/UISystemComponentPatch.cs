@@ -1,6 +1,6 @@
 using Keen.VRage.Render.FrameData;
 
-namespace LinuxCompat.Patches.Rendering;
+namespace ClientPlugin.Patches.Rendering;
 
 public static class UISystemComponentPatch
 {

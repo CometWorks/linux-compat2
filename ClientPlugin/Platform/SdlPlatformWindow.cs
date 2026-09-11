@@ -4,7 +4,7 @@ using Keen.VRage.Library.Mathematics;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
-namespace LinuxCompat.Platform;
+namespace ClientPlugin.Platform;
 
 public sealed unsafe class SdlPlatformWindow : IPlatformWindow
 {

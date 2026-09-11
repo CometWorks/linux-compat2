@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using Keen.VRage.Library.Diagnostics;
 
-namespace LinuxCompat.Patches.Rendering;
+namespace ClientPlugin.Patches.Rendering;
 
 /// <summary>
 /// Replaces the Windows edition lookup that the renderer logs while initializing.

@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Keen.Game2.Simulation.RuntimeSystems.Saves;
 
-namespace LinuxCompat.Patches.Rendering;
+namespace ClientPlugin.Patches.Rendering;
 
 /// <summary>
 /// Holds the startup autosave back until the voxel terrain has streamed in, so the save

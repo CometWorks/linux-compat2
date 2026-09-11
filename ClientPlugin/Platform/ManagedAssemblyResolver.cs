@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace LinuxCompat.Platform;
+namespace ClientPlugin.Platform;
 
 /// <summary>
 /// Last-chance managed assembly resolver serving the plugin's Bin directory, so managed

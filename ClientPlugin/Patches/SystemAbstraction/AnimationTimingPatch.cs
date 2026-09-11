@@ -2,7 +2,7 @@ using System.Diagnostics;
 using HarmonyLib;
 using Keen.VRage.Animation.Client.GameObjects.Budgeting;
 
-namespace LinuxCompat.Patches.SystemAbstraction;
+namespace ClientPlugin.Patches.SystemAbstraction;
 
 [HarmonyPatch(
     typeof(AnimationBudgetSessionComponent.AnimatorRuntimeAccumulator),

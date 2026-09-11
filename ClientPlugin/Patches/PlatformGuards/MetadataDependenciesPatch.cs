@@ -1,11 +1,11 @@
 using System.Reflection;
+using ClientPlugin.Platform;
 using HarmonyLib;
 using Keen.VRage.DCS.Internal;
 using Keen.VRage.Library.Reflection;
 using Keen.VRage.Library.Threading;
-using LinuxCompat.Platform;
 
-namespace LinuxCompat.Patches.PlatformGuards;
+namespace ClientPlugin.Patches.PlatformGuards;
 
 /// <summary>
 /// Keeps VRage.Platform.Windows out of the metadata dependency expansion on Linux and adds

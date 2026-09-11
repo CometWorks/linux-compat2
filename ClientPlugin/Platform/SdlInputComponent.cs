@@ -8,7 +8,7 @@ using Keen.VRage.DCS.Components;
 using Keen.VRage.Library.Diagnostics;
 using Keen.VRage.Library.Mathematics;
 
-namespace LinuxCompat.Platform;
+namespace ClientPlugin.Platform;
 
 [DefaultTag("IPlatformInput")]
 public sealed class SdlInputComponent : EngineComponent, IPlatformInput

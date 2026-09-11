@@ -2,7 +2,7 @@ using HarmonyLib;
 using Keen.VRage.Core.Render;
 using Keen.VRage.UI.EngineComponents;
 
-namespace LinuxCompat.Patches.Rendering;
+namespace ClientPlugin.Patches.Rendering;
 
 [HarmonyPatch(typeof(UIEngineComponent), nameof(UIEngineComponent.UIManagerTick))]
 [HarmonyPatchCategory("Finish")]

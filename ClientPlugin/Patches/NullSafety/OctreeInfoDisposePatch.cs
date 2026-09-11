@@ -1,7 +1,7 @@
 using HarmonyLib;
 using Keen.VRage.Voxels.EngineComponents.Streaming;
 
-namespace LinuxCompat.Patches.NullSafety;
+namespace ClientPlugin.Patches.NullSafety;
 
 [HarmonyPatch(
     typeof(OctreeRegionStreamingComponent.OctreeInfoInternal),

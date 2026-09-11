@@ -2,7 +2,7 @@ using HarmonyLib;
 using Keen.Game2.Client.UI.Menu.News;
 using Keen.VRage.Library.Filesystem;
 
-namespace LinuxCompat.Patches.UIDisplay;
+namespace ClientPlugin.Patches.UIDisplay;
 
 [HarmonyPatch(
     typeof(BannerFetchService),
