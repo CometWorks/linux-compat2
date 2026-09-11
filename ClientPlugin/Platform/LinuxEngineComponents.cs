@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime;
@@ -155,13 +156,38 @@ internal sealed class LinuxSystemEngineComponent : EngineComponent, IPlatformSys
     {
         try
         {
-            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
-            return true;
+            var uri = new Uri(url);
+            if (uri.Scheme != Uri.UriSchemeHttps)
+                return false;
+
+            using var process = Process.Start(CreateStartInfo(uri));
+            return process != null;
         }
-        catch
+        catch (Win32Exception ex)
         {
+            Log?.WriteLine(
+                $"Cannot start the default browser. Check that a desktop URL launcher and browser are installed: {ex}"
+            );
             return false;
         }
+        catch (Exception ex)
+        {
+            Log?.WriteLine($"Cannot open browser URL: {ex}");
+            return false;
+        }
+    }
+
+    internal static ProcessStartInfo CreateStartInfo(Uri uri)
+    {
+        var startInfo = new ProcessStartInfo("xdg-open") { UseShellExecute = false };
+        startInfo.ArgumentList.Add(uri.ToString());
+        // Steam's runtime can crash external browsers. Change only the child's environment.
+        startInfo.Environment["LD_PRELOAD"] = string.Empty;
+        if (startInfo.Environment.TryGetValue("SYSTEM_LD_LIBRARY_PATH", out var systemLibraryPath))
+            startInfo.Environment["LD_LIBRARY_PATH"] = systemLibraryPath;
+        if (startInfo.Environment.TryGetValue("SYSTEM_PATH", out var systemPath))
+            startInfo.Environment["PATH"] = systemPath;
+        return startInfo;
     }
 
     public DateTime GetNetworkTimeUTC() => DateTime.UtcNow;
