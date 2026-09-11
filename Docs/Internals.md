@@ -4,29 +4,28 @@
 
 ## Patching notes
 
-Harmony targets are declared with patch attributes and the `Finish` category. The preloader
-installs that category before `Program.Main` can be JIT-compiled. Keep patches in this category
-unless their target is known to run after plugin initialization.
+Patch attributes declare the Harmony targets, all of them in the `Finish` category. The
+preloader installs that category before `Program.Main` can be JIT-compiled. Keep new patches
+there unless you know their target runs after plugin initialization.
 
-Krafs.Publicizer handles compile-time access to non-public game APIs. The `<Publicize>` entries
-in `ClientPlugin/ClientPlugin.csproj` must match the `IgnoresAccessChecksTo` declarations in
+Krafs.Publicizer gives compile-time access to non-public game APIs. Its `<Publicize>` entries in
+`ClientPlugin/ClientPlugin.csproj` have to match the `IgnoresAccessChecksTo` declarations in
 `ClientPlugin/Tools/GameAssembliesToPublicize.cs`.
 
-`ClientPlugin/GlobalUsings.cs` carries the usings the sources were written against, because
-Pulsar's Roslyn compiler does not run MSBuild and so never applies `ImplicitUsings`.
+`ClientPlugin/GlobalUsings.cs` carries the usings the sources were written against. Pulsar's
+Roslyn compiler does not run MSBuild, so it never applies `ImplicitUsings`.
 
-Pulsar's plugin compiler transitively references `VRage.Library.Generator`, which duplicates
-several `VRage.Library` types. Code that touches those conflicting types must continue to use
-reflection.
+Pulsar's plugin compiler picks up `VRage.Library.Generator` transitively, and that assembly
+duplicates several `VRage.Library` types. Code touching any of those conflicting types has to go
+through reflection.
 
 Harmony 2.4.2 cannot patch methods containing exception filters, and MonoMod cannot rewrite open
 generic definitions. The affected renderer patches target callers or constructed generic
 methods instead.
 
-Pulsar's build cache is under `~/.config/Pulsar/Modern/DevFolder/linux-compat-*`. Remove the
-matching cache directory to force a source rebuild and asset deployment. Compile errors are in
-`~/.config/Pulsar/Modern/info.log`; game logs are in
-`~/.config/SpaceEngineers2/Temp/Logs/`.
+Pulsar's build cache sits under `~/.config/Pulsar/Modern/DevFolder/linux-compat-*`. Delete the
+matching cache directory to force a source rebuild and a fresh asset deployment. Compile errors
+land in `~/.config/Pulsar/Modern/info.log`, game logs in `~/.config/SpaceEngineers2/Temp/Logs/`.
 
 ## Repository layout
 
@@ -39,7 +38,7 @@ matching cache directory to force a source rebuild and asset deployment. Compile
 - `ClientPlugin/Tools/`: publicizer declarations, transpiler helpers and preloader helpers
 - `ClientPlugin/Preloader.cs`: ReadyToRun rewriting and early `Finish` category installation
 - `ClientPlugin/ReadyToRun.cs`: shipped ReadyToRun assembly list
-- `ClientPlugin/Plugin.cs`: the `IPlugin` Pulsar loads; the compatibility work happens in the
-  preloader, so this type only announces the plugin
+- `ClientPlugin/Plugin.cs`: the `IPlugin` Pulsar loads. All the compatibility work happens in
+  the preloader, so this type only announces the plugin
 - `ClientPlugin/ClientPlugin.xml`: Pulsar and PluginHub metadata, including native assets
 - `Checks/InstallSmoke/`: patch installation and Cecil rewrite smoke check

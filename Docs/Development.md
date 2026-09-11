@@ -4,8 +4,8 @@
 
 ## Setup
 
-The build locates the standard Steam and Pulsar directories automatically. For a different
-installation, create the git-ignored `Directory.Build.props.user` file in the repository root:
+The build finds the standard Steam and Pulsar directories on its own. If yours are somewhere
+else, create the git-ignored `Directory.Build.props.user` file in the repository root:
 
 ```xml
 <Project>
@@ -45,11 +45,11 @@ Build the solution with:
 dotnet build LinuxCompat.sln
 ```
 
-The same command works on Windows and Linux. Use `dotnet clean LinuxCompat.sln` to remove build
-output; the repository does not use platform-specific build scripts.
+That works the same on Windows and Linux. `dotnet clean LinuxCompat.sln` removes the build
+output. There are no platform-specific build scripts in the repository.
 
-The client project deploys `plugin.dll` and `plugin.xml` to
-`~/.config/Pulsar/Modern/Local/linux-compat` when the Pulsar path is available.
+Whenever the Pulsar path is available, the client project deploys `plugin.dll` and `plugin.xml`
+to `~/.config/Pulsar/Modern/Local/linux-compat`.
 
 ## Formatting
 
@@ -60,16 +60,16 @@ dotnet tool install -g csharpier
 csharpier format .
 ```
 
-Use `csharpier check .` to verify formatting without changing files. `.csharpierignore` limits
-CSharpier to C# source and excludes build output.
+`csharpier check .` verifies the formatting without touching any files. `.csharpierignore`
+keeps CSharpier on C# source and off the build output.
 
 ## Verification
 
 `Checks/InstallSmoke` installs the full `Finish` Harmony category against the shipped binaries.
-This runs every transpiler and checks its IL anchors without starting the game. It also applies
-the `VRage.Steam` Cecil rewrite and prepares the rewritten methods. The check fails if the number
-of patched methods changes, so adding or removing a patch means updating the expected count in
-`Checks/InstallSmoke/Program.cs`.
+That runs every transpiler and checks its IL anchors, all without starting the game. It also
+applies the `VRage.Steam` Cecil rewrite and prepares the rewritten methods. The check fails when
+the number of patched methods changes, so if you add or remove a patch, update the expected count
+in `Checks/InstallSmoke/Program.cs`.
 
 ```bash
 dotnet build Checks/InstallSmoke/InstallSmoke.csproj -p:Game2=/path/to/SpaceEngineers2/Game2
@@ -80,5 +80,5 @@ PULSAR_LIBRARIES=/path/to/Pulsar/Libraries/Modern \
   /path/to/SpaceEngineers2/Game2
 ```
 
-`COMPlus_ReadyToRun=0` is required: without it the types in the rewritten `VRage.Steam`
-assembly cannot be resolved and the prepatch check fails.
+`COMPlus_ReadyToRun=0` is required. Without it the types in the rewritten `VRage.Steam`
+assembly do not resolve and the prepatch check fails.
