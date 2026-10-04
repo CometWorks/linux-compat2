@@ -1,6 +1,10 @@
 <Project>
     <PropertyGroup>
+        <!-- Folder containing SpaceEngineers2.exe (empty = auto-detect from Steam) -->
         <Game2></Game2>
+
+        <!-- Pulsar folder to deploy the plugin into after each build (empty = no deployment),
+             for example $(APPDATA)\Pulsar on Windows or $(HOME)/.config/Pulsar on Linux -->
         <Pulsar></Pulsar>
 
         <Version>1.0.6</Version>
@@ -13,15 +17,12 @@
 
     <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
         <Game2 Condition="'$(Game2)' == ''">$(registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 1133870@InstallLocation)\Game2</Game2>
-        <Pulsar Condition="'$(Pulsar)' == '' and '$(APPDATA)' != ''">$(APPDATA)\Pulsar</Pulsar>
     </PropertyGroup>
 
     <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
         <SteamPath Condition="'$(SteamPath)' == '' and Exists('$(HOME)/.steam/steam/steamapps')">$(HOME)/.steam/steam</SteamPath>
         <SteamPath Condition="'$(SteamPath)' == '' and Exists('$(HOME)/.local/share/Steam/steamapps')">$(HOME)/.local/share/Steam</SteamPath>
         <SteamPath Condition="'$(SteamPath)' == '' and Exists('$(HOME)/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps')">$(HOME)/.var/app/com.valvesoftware.Steam/.local/share/Steam</SteamPath>
-        <Pulsar Condition="'$(Pulsar)' == '' and '$(XDG_CONFIG_HOME)' != ''">$(XDG_CONFIG_HOME)/Pulsar</Pulsar>
-        <Pulsar Condition="'$(Pulsar)' == '' and '$(HOME)' != ''">$(HOME)/.config/Pulsar</Pulsar>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -33,7 +34,7 @@
         <Game2 Condition="'$(Game2)' == '' and '$(HOME)' != ''">$(HOME)/.steam/steam/steamapps/common/SpaceEngineers2/Game2</Game2>
     </PropertyGroup>
 
-    <PropertyGroup>
+    <PropertyGroup Condition="'$(Pulsar)' != ''">
         <LocalDeploymentDir Condition="'$(LocalDeploymentDir)' == ''">$(Pulsar)/Modern/Local/linux-compat</LocalDeploymentDir>
     </PropertyGroup>
 </Project>

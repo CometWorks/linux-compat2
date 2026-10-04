@@ -4,17 +4,21 @@
 
 ## Setup
 
-The build finds the standard Steam and Pulsar directories on its own. If yours are somewhere
+The build finds the game in the standard Steam directories on its own. If yours is somewhere
 else, create the git-ignored `Directory.Build.props.user` file in the repository root:
 
 ```xml
 <Project>
     <PropertyGroup>
         <Game2>/path/to/SpaceEngineers2/Game2</Game2>
-        <Pulsar>/path/to/Pulsar</Pulsar>
     </PropertyGroup>
 </Project>
 ```
+
+Load the plugin through a Pulsar development source, as below. Builds don't deploy anything
+unless `Pulsar` is set in that file (for example to `$(HOME)/.config/Pulsar`) or passed as
+`-p:Pulsar=...`. A deployed copy shows up as a separate local plugin and can shadow the
+published one when the development source is disabled.
 
 Register the repository as a Pulsar development source in
 `~/.config/Pulsar/Modern/Sources/sources.xml`:
@@ -48,8 +52,8 @@ dotnet build LinuxCompat.sln
 That works the same on Windows and Linux. `dotnet clean LinuxCompat.sln` removes the build
 output. There are no platform-specific build scripts in the repository.
 
-Whenever the Pulsar path is available, the client project deploys `plugin.dll` and `plugin.xml`
-to `~/.config/Pulsar/Modern/Local/linux-compat`.
+With `Pulsar` set, the client project deploys `plugin.dll` and `plugin.xml` to
+`<Pulsar>/Modern/Local/linux-compat`.
 
 ## Formatting
 
