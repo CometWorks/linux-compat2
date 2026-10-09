@@ -86,6 +86,7 @@ internal static class LinuxNativeLibraryResolver
         "VRage.Physics.Native.dll",
         "VRage.Voxels.Native.dll",
         "VRage.Slug.Native.dll",
+        "VRage.KytheraV2.Native.dll",
     ];
 
     private static nint Resolve(Assembly assembly, string libraryName)
