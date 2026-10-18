@@ -71,7 +71,8 @@ keeps CSharpier on C# source and off the build output.
 
 `Checks/InstallSmoke` installs the full `Finish` Harmony category against the shipped binaries.
 That runs every transpiler and checks its IL anchors, all without starting the game. It also
-applies the `VRage.Steam` Cecil rewrite and prepares the rewritten methods. The check fails when
+applies the `VRage.Steam` Cecil rewrite and prepares the rewritten methods, and checks the
+Stopwatch timestamp patches with an uptime past the vanilla overflow limit. The check fails when
 the number of patched methods changes, so if you add or remove a patch, update the expected count
 in `Checks/InstallSmoke/Program.cs`.
 
