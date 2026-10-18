@@ -44,3 +44,20 @@ internal static class AgsQueryAdapterDetailsByIdPatch
 {
     static bool Prefix() => false;
 }
+
+// DeviceWrap calls Aftermath for adapters reporting NVIDIA's vendor id, which DXVK does
+// when DXVK_ENABLE_NVAPI=1 is in the environment. Aftermath P/Invokes the Windows-only
+// GFSDK_Aftermath_Lib.x64.dll, so device creation would fail.
+[HarmonyPatch(typeof(Aftermath), nameof(Aftermath.Initialize_PreDevice))]
+[HarmonyPatchCategory("Finish")]
+internal static class AftermathInitializePreDevicePatch
+{
+    static bool Prefix() => false;
+}
+
+[HarmonyPatch(typeof(Aftermath), nameof(Aftermath.Initialize_PostDevice))]
+[HarmonyPatchCategory("Finish")]
+internal static class AftermathInitializePostDevicePatch
+{
+    static bool Prefix() => false;
+}

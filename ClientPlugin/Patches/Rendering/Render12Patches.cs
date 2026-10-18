@@ -936,3 +936,38 @@ internal static class PrintOsDetailsPatch
     private static bool Prefix(Keen.VRage.Library.Diagnostics.Log log) =>
         OsDetailsPatch.PrintOsDetails(log);
 }
+
+// The catch blocks of the CreateDevice local function call
+// CoreSystems.DeviceWrap.ProcessDebugOutput(), but DeviceWrap is still null when its
+// constructor threw, so the handler's NullReferenceException replaced the real error.
+[HarmonyPatch]
+[HarmonyPatchCategory("Finish")]
+internal static class CreateDeviceErrorPatch
+{
+    private static readonly MethodInfo ProcessDebugOutput =
+        AccessTools.Method(typeof(DeviceWrap), nameof(DeviceWrap.ProcessDebugOutput))
+        ?? throw new MissingMethodException(
+            typeof(DeviceWrap).FullName,
+            nameof(DeviceWrap.ProcessDebugOutput)
+        );
+
+    private static MethodBase TargetMethod() =>
+        TranspilerHelpers.FindMethodContaining(typeof(Render12EngineComponent), "g__CreateDevice|");
+
+    private static IEnumerable<CodeInstruction> Transpiler(
+        IEnumerable<CodeInstruction> instructions
+    ) =>
+        TranspilerHelpers.ReplaceCalls(
+            instructions,
+            ProcessDebugOutput,
+            TranspilerHelpers.FindMethod(
+                typeof(CreateDeviceErrorPatch),
+                nameof(ProcessDebugOutputIfAny)
+            ),
+            2,
+            "DeviceWrap.ProcessDebugOutput calls in CreateDevice"
+        );
+
+    public static void ProcessDebugOutputIfAny(DeviceWrap? deviceWrap, bool enableVRAMAnalysis) =>
+        deviceWrap?.ProcessDebugOutput(enableVRAMAnalysis);
+}
