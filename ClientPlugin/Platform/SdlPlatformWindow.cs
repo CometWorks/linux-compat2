@@ -216,7 +216,7 @@ public sealed unsafe class SdlPlatformWindow : IPlatformWindow
         int height,
         bool topMost,
         bool isOutputAttachedToAdapter,
-        in BoundingBox2I desktopBounds
+        BoundingBox2I desktopBounds
     )
     {
         lock (_snapshotLock)

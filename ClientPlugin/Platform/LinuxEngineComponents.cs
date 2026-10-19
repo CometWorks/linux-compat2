@@ -98,7 +98,23 @@ internal sealed class LinuxRenderEngineComponent : EngineComponent, IPlatformRen
 
     public Rational GetMonitorDefaultRefreshRate(nint hMonitor) => Rational.Zero;
 
+    /// <summary>
+    /// The game only records the work area in the adapter info. An empty box is what Windows
+    /// returns when the monitor lookup fails.
+    /// </summary>
+    public BoundingBox2I GetMonitorWorkArea(nint hMonitor) => default;
+
+    /// <summary>
+    /// The window manager draws the SDL window's decorations outside the client area.
+    /// </summary>
+    public Vector2I GetWindowedFrameSize() => Vector2I.Zero;
+
     public bool IsDeveloperModeEnabled() => false;
+
+    /// <summary>
+    /// TDR is a Windows driver registry setting. Unknown makes the game use its default wait.
+    /// </summary>
+    public uint? TDRDelay() => null;
 }
 
 [DefaultTag("IPlatformSystem")]
@@ -229,6 +245,7 @@ internal sealed class LinuxWindowsEngineComponent : EngineComponent, IPlatformWi
     private bool _hidden;
     private bool _delayShowing;
     private bool _applicationReady;
+    private bool _shutdownHandled;
 
     public nint WindowHandle { get; set; }
     public IPlatformWindow Window { get; private set; } = null!;
@@ -294,5 +311,18 @@ internal sealed class LinuxWindowsEngineComponent : EngineComponent, IPlatformWi
         sdlWindow?.SetShowAllowed(true);
         Window.ShowAndFocus();
         core.NotifyApplicationShown();
+    }
+
+    /// <summary>
+    /// Releases the cursor and hides the window before the game saves and tears down, like Windows.
+    /// </summary>
+    public void OnApplicationShutdownStarted()
+    {
+        if (_shutdownHandled || Window == null)
+            return;
+        _shutdownHandled = true;
+        Window.ShowCursor = true;
+        Window.CaptureCursor = false;
+        Window.Hide();
     }
 }

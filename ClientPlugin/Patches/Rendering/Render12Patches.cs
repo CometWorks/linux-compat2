@@ -13,6 +13,7 @@ using Keen.VRage.Render12.Core.Profiling;
 using Keen.VRage.Render12.Core.Systems;
 using Keen.VRage.Render12.EngineComponents;
 using Keen.VRage.Render12.Resources.BindableTextures;
+using Keen.VRage.Render12.Resources.Views;
 using Keen.VRage.Render12.SceneSystem.Components;
 using Keen.VRage.Render12.UIStage;
 using Keen.VRage.Render12.Utils;
@@ -625,10 +626,11 @@ internal static class WaitCpuPatch
         TranspilerHelpers.FindMethodContaining(typeof(FrameDispatcher), "g__WaitCPU|");
 
     /// <summary>Inserts the Linux fence poll after the fence lookup in the WaitCPU local
-    /// function of FrameDispatcher.FlushAllQueuesAndWaitCpu.</summary>
+    /// function of FrameDispatcher.FlushAllQueuesAndWaitCpu. The poll jumps to the label the
+    /// game's own "fence already completed" check uses, which stays inside the profiler scope's
+    /// try block.</summary>
     private static IEnumerable<CodeInstruction> Transpiler(
-        IEnumerable<CodeInstruction> instructions,
-        ILGenerator generator
+        IEnumerable<CodeInstruction> instructions
     )
     {
         List<CodeInstruction> result = [.. instructions];
@@ -637,22 +639,26 @@ internal static class WaitCpuPatch
         {
             if (!TranspilerHelpers.CallsMethod(result[i], GetD3DFence))
                 continue;
-            if (result[i + 1].opcode != OpCodes.Stloc_0)
+            if (!result[i + 1].IsStloc())
                 throw new InvalidOperationException(
                     "[LinuxCompat] WaitCPU fence store anchor not found."
                 );
+            CodeInstruction completedCheck =
+                result
+                    .Skip(i + 2)
+                    .FirstOrDefault(c => c.opcode == OpCodes.Bge_Un_S || c.opcode == OpCodes.Bge_Un)
+                ?? throw new InvalidOperationException(
+                    "[LinuxCompat] WaitCPU fence completion check not found."
+                );
 
-            Label continueLabel = generator.DefineLabel();
-            result[i + 2].labels.Add(continueLabel);
             result.InsertRange(
                 i + 2,
                 [
-                    new CodeInstruction(OpCodes.Ldloc_0),
+                    CodeInstruction.LoadLocal(result[i + 1].LocalIndex()),
                     new CodeInstruction(OpCodes.Ldarg_1),
                     new CodeInstruction(OpCodes.Ldstr, "FlushAllQueuesAndWaitCpu"),
                     new CodeInstruction(OpCodes.Call, wait),
-                    new CodeInstruction(OpCodes.Brfalse, continueLabel),
-                    new CodeInstruction(OpCodes.Ret),
+                    new CodeInstruction(OpCodes.Brtrue, completedCheck.operand),
                 ]
             );
             return result;
@@ -866,8 +872,7 @@ internal static class TakeRequestedScreenshotsPatch
 [HarmonyPatch(
     typeof(MainUISystem),
     nameof(MainUISystem.DoWork),
-    new[] { typeof(DirectCommandList), typeof(UITargetSetup), typeof(Vector2I) },
-    new[] { ArgumentType.Normal, ArgumentType.Ref, ArgumentType.Normal }
+    new[] { typeof(DirectCommandList), typeof(IRenderTargetView), typeof(Vector2I) }
 )]
 [HarmonyPatchCategory("Finish")]
 internal static class MainUiDoWorkPatch
@@ -879,8 +884,9 @@ internal static class MainUiDoWorkPatch
             nameof(UITargetSetup.ViewportResolution)
         );
 
-    /// <summary>Resolves the UI viewport resolution against the persistent batch layout at
-    /// the start of MainUISystem.DoWork, keeping stale-batch coordinates consistent.</summary>
+    /// <summary>Resolves the UI viewport resolution against the persistent batch layout where
+    /// MainUISystem.DoWork builds its UITargetSetup, keeping stale-batch coordinates
+    /// consistent.</summary>
     private static IEnumerable<CodeInstruction> Transpiler(
         IEnumerable<CodeInstruction> instructions
     )
@@ -890,16 +896,15 @@ internal static class MainUiDoWorkPatch
             nameof(MainUISystemPatch.ResolveViewportResolution)
         );
         List<CodeInstruction> result = [.. instructions];
-        result.InsertRange(
-            0,
-            [
-                new CodeInstruction(OpCodes.Ldarg_2),
-                new CodeInstruction(OpCodes.Ldarg_2),
-                new CodeInstruction(OpCodes.Ldfld, ViewportResolution),
-                new CodeInstruction(OpCodes.Call, resolve),
-                new CodeInstruction(OpCodes.Stfld, ViewportResolution),
-            ]
-        );
+        int stores = 0;
+        for (int i = 0; i < result.Count; i++)
+        {
+            if (result[i].opcode != OpCodes.Stfld || !Equals(result[i].operand, ViewportResolution))
+                continue;
+            result.Insert(i++, new CodeInstruction(OpCodes.Call, resolve));
+            stores++;
+        }
+        TranspilerHelpers.AssertCount(stores, 1, "ViewportResolution store in MainUISystem.DoWork");
         return result;
     }
 }
