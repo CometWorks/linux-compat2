@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Reflection;
 using ClientPlugin.Platform;
 using HarmonyLib;
@@ -83,9 +84,9 @@ internal static class MetadataHelperFilterAssembliesWithMetadataPatch
 [HarmonyPatchCategory("Finish")]
 internal static class AttributeIndexerObservePatch
 {
-    static void Postfix(AttributeIndexer __instance, Assembly assembly)
+    static void Postfix(AttributeIndexer __instance, ImmutableArray<Assembly> assemblies)
     {
-        if (assembly != MetadataDependencies.PluginAssembly)
+        if (!assemblies.Contains(MetadataDependencies.PluginAssembly))
             return;
 
         foreach (Type component in MetadataDependencies.IndexedComponents)

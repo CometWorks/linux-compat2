@@ -174,18 +174,18 @@ internal static class GameAppAddRender12Patch
         {
             if (!TranspilerHelpers.CallsMethod(result[i], addRender12))
                 continue;
-            if (result[i - 2].opcode != OpCodes.Ldarg_1 || result[i - 1].opcode != OpCodes.Ldloc_0)
+            if (result[i - 2].opcode != OpCodes.Ldarg_1 || !result[i - 1].IsLdloc())
                 throw new InvalidOperationException(
                     "[LinuxCompat] GameApp.AddRender12 argument load anchor not found."
                 );
 
-            // The call site is `ldarg.1; ldloc.0; call AddRender12`; duplicate the two
-            // argument loads for the configuration call inserted in front of it.
+            // The call site is `ldarg.1; ldloc <render builder>; call AddRender12`; duplicate
+            // the two argument loads for the configuration call inserted in front of it.
             result.InsertRange(
                 i,
                 [
                     new CodeInstruction(OpCodes.Ldarg_1),
-                    new CodeInstruction(OpCodes.Ldloc_0),
+                    CodeInstruction.LoadLocal(result[i - 1].LocalIndex()),
                     new CodeInstruction(OpCodes.Call, configure),
                 ]
             );
