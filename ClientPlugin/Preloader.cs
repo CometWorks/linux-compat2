@@ -21,12 +21,14 @@ public static class Preloader
 
     // ReSharper disable once UnusedMember.Global
     public static IEnumerable<string> TargetDLLs =>
-        ReadyToRunDisabled() ? ["VRage.Steam.dll"] : ReadyToRun.Dlls;
+        ReadyToRunDisabled() ? ["VRage.Library.dll", "VRage.Steam.dll"] : ReadyToRun.Dlls;
 
     // ReSharper disable once UnusedMember.Global
     public static void Patch(AssemblyDefinition asmDef)
     {
-        if (asmDef.Name.Name == "VRage.Steam")
+        if (asmDef.Name.Name == "VRage.Library")
+            NativeMemoryPrepatch.Apply(asmDef);
+        else if (asmDef.Name.Name == "VRage.Steam")
             SteamPrepatch.Apply(asmDef);
     }
 
