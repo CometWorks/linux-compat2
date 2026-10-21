@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Keen.VRage.Core;
 using Keen.VRage.Core.Platform;
 using Keen.VRage.Core.Platform.CrashReporting;
@@ -73,6 +74,39 @@ internal sealed class LinuxPlatformFactory : IPlatformFactory
         public void SetNativeExceptionHandler(Action<nint> handler) { }
 
         public bool CheckDevelopmentParentProcess() => false;
+
+        /// <summary>
+        /// The .NET runtime writes a crash dump by starting its <c>createdump</c> tool as a child
+        /// of the crashing process, on Linux as on Windows, so look for such a child the way the
+        /// Windows reporter does. The parent id comes from <c>/proc/&lt;pid&gt;/status</c>.
+        /// </summary>
+        public bool IsWritingCrashDump()
+        {
+            foreach (Process process in Process.GetProcessesByName("createdump"))
+            {
+                using (process)
+                {
+                    if (GetParentProcessId(process.Id) == Environment.ProcessId)
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        private static int GetParentProcessId(int pid)
+        {
+            try
+            {
+                string? line = File.ReadLines($"/proc/{pid}/status")
+                    .FirstOrDefault(l => l.StartsWith("PPid:", StringComparison.Ordinal));
+                return line != null && int.TryParse(line.AsSpan(5), out int ppid) ? ppid : -1;
+            }
+            catch (IOException)
+            {
+                // The process exited after it was listed.
+                return -1;
+            }
+        }
 
         public MessageBoxResult MessageBox(string text, string caption, MessageBoxOptions options)
         {
