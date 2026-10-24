@@ -132,11 +132,12 @@ internal sealed class LinuxPlatformFactory : IPlatformFactory
         public DiskInfo GetDriveTypeForPath(string path) => DiskInfo.Default;
 
         // Windows reads these from its event log. Linux has no equivalent we read, so it
-        // reports no crash info and adds no shutdown events.
+        // reports no crash info and adds no shutdown or application fault events.
         public string? TryGetPlatformCrashInfo(
             DateTime from,
             DateTime to,
-            List<SystemShutdownEvent> shutdownEvents
+            List<SystemShutdownEvent> shutdownEvents,
+            List<ApplicationFaultEvent> applicationFaultEvents
         ) => null;
     }
 }
