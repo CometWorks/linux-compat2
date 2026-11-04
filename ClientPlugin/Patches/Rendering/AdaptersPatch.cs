@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using ClientPlugin.Platform;
 using Keen.VRage.Core.Render;
 
@@ -38,6 +39,33 @@ public static class AdaptersPatch
             $"[LinuxCompat] Adapter '{adapter.DeviceName}' reported as "
                 + (isIntegrated ? "integrated" : "discrete")
                 + " by Vulkan."
+        );
+    }
+
+    /// <summary>
+    /// Restores the engine's GTX 10x0 workaround, which DXVK's vendor spoof switches off.
+    ///
+    /// <c>Adapters.CreateAdapterInfo</c> sets <c>NeedsLimitedIndirectCommands</c> for
+    /// NVIDIA adapters named like "GTX 1080", which sizes the indirect draw buffers from the
+    /// last frame's counts instead of the worst case. DXVK reports NVIDIA GPUs with AMD's
+    /// vendor id, so on Linux a Pascal card never matches and gets the full-size buffers.
+    /// A GTX 1080 Ti player loses the Vulkan device (Xid 13, compute class) on entering a
+    /// world and the desktop hangs with it (SE-997, DIS-0049); the missing workaround is the
+    /// likely cause. The adapter name is not spoofed, so Keen's pattern still matches.
+    /// </summary>
+    public static void RestoreLimitedIndirectCommands(ref AdapterInfo? __result)
+    {
+        if (
+            __result is not { } adapter
+            || adapter.SupportDetails.NeedsLimitedIndirectCommands
+            || !Regex.IsMatch(adapter.DeviceName, "GTX.*10\\d0", RegexOptions.IgnoreCase)
+        )
+            return;
+
+        adapter.SupportDetails.NeedsLimitedIndirectCommands = true;
+        __result = adapter;
+        Console.WriteLine(
+            $"[LinuxCompat] Adapter '{adapter.DeviceName}' uses limited indirect commands."
         );
     }
 
