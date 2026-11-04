@@ -344,8 +344,11 @@ internal static class CreateAdapterInfoPatch
         );
     }
 
-    private static void Postfix(ref AdapterInfo? __result) =>
+    private static void Postfix(ref AdapterInfo? __result)
+    {
         AdaptersPatch.FixAdapterType(ref __result);
+        AdaptersPatch.RestoreLimitedIndirectCommands(ref __result);
+    }
 
     private static int FindSingleFieldStore(
         List<CodeInstruction> instructions,
