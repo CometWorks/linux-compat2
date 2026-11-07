@@ -28,3 +28,9 @@ Open an issue and attach the game and Pulsar logs, or start a support thread on 
 ## Legal
 
 Space Engineers 2 is a trademark of Keen Software House s.r.o.
+
+## License
+
+AGPL-3.0, see [LICENSE](LICENSE).
+
+Please contact us for alternate licensing.
