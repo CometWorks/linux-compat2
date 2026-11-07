@@ -1,3 +1,4 @@
+// Parts of this file were contributed by derrickmehaffy (PR #28) under the MIT License, see LICENSE-MIT.
 using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;

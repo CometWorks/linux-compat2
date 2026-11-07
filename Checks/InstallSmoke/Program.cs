@@ -1,3 +1,4 @@
+// Parts of this file were contributed by derrickmehaffy (PRs #26, #27, #28) under the MIT License, see LICENSE-MIT.
 using System.Diagnostics;
 using System.Reflection;
 using ClientPlugin.Preloading;
